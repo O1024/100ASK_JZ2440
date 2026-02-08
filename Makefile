@@ -12,8 +12,10 @@ all: jz2440.bin
 jz2440.bin: jz2440.elf
 	$(OBJCOPY) -O binary -S $< $@
 
+LIBGCC  = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+
 jz2440.elf: $(OBJS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBGCC) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

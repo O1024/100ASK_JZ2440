@@ -53,8 +53,8 @@ clean_bss:
 	b clean_bss
 
 on_sdram:
-	/* 6. 设置栈指针 (在 SDRAM 高端地址) */
-	ldr sp, =0x34000000
+	/* 6. 设置栈指针 (在 SDRAM 高端地址，JZ2440 为 64MB) */
+	ldr sp, =0x33F00000
 
 	/* 7. 跳转到 main (绝对跳转，切换到 SDRAM 执行) */
 	ldr pc, =main
@@ -91,5 +91,3 @@ sdram_config:
 	.word 0x000000B1	@ BANKSIZE
 	.word 0x00000030	@ MRSRB6 (CL=3)
 	.word 0x00000030	@ MRSRB7
-
-
