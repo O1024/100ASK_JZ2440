@@ -1,11 +1,44 @@
 #include "s3c2440_soc.h"
 
-/* 实验参数：1MB 数据量 (256K 个 Word) */
-#define BUF_SIZE (1024 * 1024 / 4)
+#define BUF_SIZE (1024 * 1024 / 4) // 1MB
 #define SRC_ADDR (0x30100000)
 #define DST_ADDR (0x30200000)
 
 #define CLKCON (*(volatile unsigned int *)0x4C00000C)
+
+/* Timer 4: 用于性能测量 (1MHz 频率) */
+void timer_init(void) {
+    /* PCLK = 50MHz
+     * Prescaler 1 (for Timer 2,3,4) = 49
+     * Timer 4 clock = 50MHz / (49 + 1) = 1MHz
+     */
+    TCFG0 &= ~(0xFF << 8);
+    TCFG0 |= (49 << 8);
+    
+    /* Divider for Timer 4 = 1/1 */
+    TCFG1 &= ~(0xF << 16);
+    
+    /* 设置初始值 (最大值，向下计数) */
+    TCNTB4 = 0xFFFF;
+    
+    /* 手动更新 TCNTB4 到计数器 */
+    TCON |= (1 << 22);
+    /* 清除手动更新位，设置为自动重载并停止 */
+    TCON &= ~(1 << 22);
+    TCON |= (1 << 21); // Auto-reload
+}
+
+void timer_start(void) {
+    TCNTB4 = 0xFFFF;
+    TCON |= (1 << 22); // Manual update
+    TCON &= ~(1 << 22);
+    TCON |= (1 << 20); // Start timer 4
+}
+
+unsigned int timer_stop(void) {
+    TCON &= ~(1 << 20); // Stop timer 4
+    return (0xFFFF - TCNTO4); // 返回消耗的 ticks (微秒)
+}
 
 void uart_init(void) {
     GPHCON &= ~((3<<4) | (3<<6));
@@ -24,11 +57,15 @@ void puts(const char *s) {
     while (*s) putchar(*s++);
 }
 
-void puthex(unsigned int val) {
-    int i;
-    char arr[16] = "0123456789ABCDEF";
-    puts("0x");
-    for (i = 0; i < 8; i++) putchar(arr[(val >> ((7-i)*4)) & 0xF]);
+void putdec(unsigned int val) {
+    char buf[10];
+    int i = 0;
+    if (val == 0) { putchar('0'); return; }
+    while (val > 0) {
+        buf[i++] = (val % 10) + '0';
+        val /= 10;
+    }
+    while (i > 0) putchar(buf[--i]);
 }
 
 void delay(volatile int d) { while (d--); }
@@ -67,70 +104,55 @@ void dma_memcpy(void) {
     DISRCC3 = 0; 
     DIDST3 = DST_ADDR;
     DIDSTC3 = 0; 
-
-    /* 
-     * S3C2440 DCON3 关键配置:
-     * [31] Handshake=1, [30] Sync=1, [28] TSZ=1 (Burst4), [27] Whole=1
-     * [23] SWHW_SEL=0 (Software Request) - 陷阱：必须为0
-     * [22] RELOAD=1 (Off) - 陷阱：必须为1
-     * [21:20] DSZ=10 (Word)
-     */
     DCON3 = (1<<31)|(1<<30)|(1<<28)|(1<<27)|(0<<23)|(1<<22)|(2<<20)|BUF_SIZE;
-
-    /* 触发 */
     DMASKTRIG3 = (1<<1) | (1<<0);
-
-    /* 轮询直到 TC 归零 */
     while ((DSTAT3 & 0xFFFFF) != 0);
 }
 
 int main(void) {
+    unsigned int time_cpu, time_dma;
     uart_init();
-    CLKCON |= (1 << 14); /* 开启 DMA 时钟 */
+    timer_init();
+    CLKCON |= (1 << 14);
 
     GPFCON &= ~((3 << 8) | (3 << 10) | (3 << 12));
     GPFCON |= ((1 << 8) | (1 << 10) | (1 << 12));
     GPFDAT |= (7 << 4);
 
-    puts("\r\n=== DMA Performance Lab ===\r\n");
+    puts("\r\n=== S3C2440 Memcpy Performance Test (1MB) ===\r\n");
 
     while (1) {
+        /* 1. CPU Test */
         init_buffers();
-        
-        /* 1. CPU Memcpy */
-        puts("CPU Copy Start... ");
-        GPFDAT &= ~(1 << 4); /* LED1 ON */
+        puts("CPU Memcpy running... ");
+        timer_start();
         cpu_memcpy();
-        GPFDAT |= (1 << 4);  /* LED1 OFF */
+        time_cpu = timer_stop();
         puts("Done.\r\n");
 
-        if (verify_copy() != 0) { puts("CPU Copy Verify FAILED!\r\n"); goto error; }
-
-        delay(1000000);
+        /* 2. DMA Test */
         init_buffers();
-
-        /* 2. DMA Memcpy */
-        puts("DMA Copy Start... ");
-        GPFDAT &= ~(1 << 5); /* LED2 ON */
+        puts("DMA Memcpy running... ");
+        timer_start();
         dma_memcpy();
-        GPFDAT |= (1 << 5);  /* LED2 OFF */
+        time_dma = timer_stop();
         puts("Done.\r\n");
 
+        /* Results */
+        puts("--------------------------------------\r\n");
+        puts("CPU Time: "); putdec(time_cpu); puts(" us\r\n");
+        puts("DMA Time: "); putdec(time_dma); puts(" us\r\n");
+        
         if (verify_copy() == 0) {
-            puts("SUCCESS: DMA is working!\r\n");
+            puts("Verification: SUCCESS\r\n");
             GPFDAT &= ~(1 << 6); delay(500000); GPFDAT |= (1 << 6);
         } else {
-            puts("FAIL: DMA verify failed!\r\n");
-            goto error;
+            puts("Verification: FAILED\r\n");
+            GPFDAT &= ~(7 << 4); delay(100000); GPFDAT |= (7 << 4); delay(100000);
         }
+        puts("--------------------------------------\r\n\r\n");
         
-        puts("Wait for next round...\r\n\r\n");
         delay(3000000);
-    }
-
-error:
-    while (1) {
-        GPFDAT &= ~(7 << 4); delay(100000); GPFDAT |= (7 << 4); delay(100000);
     }
     return 0;
 }

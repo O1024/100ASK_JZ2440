@@ -56,6 +56,13 @@
 #define URXH0                       __REG(0x50000024)
 #define UBRDIV0                     __REG(0x50000028)
 
+/* PWM TIMERS */
+#define TCFG0                       __REG(0x51000000)
+#define TCFG1                       __REG(0x51000004)
+#define TCON                        __REG(0x51000008)
+#define TCNTB4                      __REG(0x5100003C)
+#define TCNTO4                      __REG(0x51000040)
+
 /* GPIO - PORT F */
 #define GPFCON						__REG(0x56000050)
 #define GPFDAT						__REG(0x56000054)
