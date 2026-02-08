@@ -1,0 +1,18 @@
+# 编译产物
+*.o
+*.elf
+*.bin
+
+# 调试器/编辑器临时文件
+.gdb_history
+.DS_Store
+*.swp
+*~
+
+# OpenOCD 临时文件
+*.log
+
+# 这里的 docs/datasheets 和 docs/schematics 建议根据需求决定是否忽略
+# 通常芯片手册较大，如果不想提交到 Git，可以取消下面两行的注释
+# docs/datasheets/
+# docs/schematics/
