@@ -59,22 +59,6 @@
 
 ---
 
-## 🛠️ OpenOCD 配置文件详解 (`scripts/jz2440.cfg`)
-
-编写调试配置时，必须考虑 JZ2440 的硬件特性与调试环境的物理限制：
-
-1.  **驱动与标识 (`adapter driver` & `vid_pid`)**：
-    - 使用 `ftdi` 驱动以兼容基于 FT2232 芯片的 OpenJTAG。
-    - `0x1457:0x5118` 是 OpenJTAG 特有的 USB 标识，用于操作系统精准定位硬件。
-2.  **时钟速率 (`adapter speed 200`)**：
-    - **为什么设为 200kHz？**：S3C2440 复位后默认不开启 PLL，主频仅为 12MHz。JTAG 协议要求调试频率需低于 CPU 主频的 1/6。为了在信号不佳或未初始化时钟时也能绝对稳定地连接，我们选择了较低的保守频率。
-3.  **复位策略 (`reset_config trst_only`)**：
-    - **为什么不选 trst_and_srst？**：JZ2440 V3 的 JTAG 接口通常只物理连接了 TRST（TAP复位），而没有连接 SRST（系统复位线）。如果配置为 `and_srst`，OpenOCD 尝试拉低不存在的引脚会报协议错误。改为 `trst_only` 后，复位动作通过 JTAG 软命令实现。
-4.  **性能优化 (`dcc_downloads` & `work-area`)**：
-    - 禁用了 DCC 下载模式，因为它在低速时钟下极易引发传输校验错误。
-    - 开启了 `fast_memory_access` 并配置了 `0x40000000`（内部 SRAM 物理地址）作为工作区，显著提升了 GDB `load` 命令的写入速度。
-
----
 
 ## 🚀 编译、烧录与调试
 
