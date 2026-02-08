@@ -54,15 +54,6 @@ if (!(GPFDAT & (1 << 0))) { // 检测到 S2 按下
 
 ---
 
-## 🛠️ OpenOCD 配置文件详解 (`scripts/jz2440.cfg`)
-
-本分支沿用了经过稳定性优化的调试配置：
-*   **速率限制**：`adapter speed 200`。由于 CPU 运行在 12MHz 晶振下，低速 JTAG 能确保指令加载不丢包。
-*   **复位模式**：`reset_config trst_only`。针对 JZ2440 仅引出 TRST 复位线的硬件特征，通过 JTAG 软指令控制内核复位。
-*   **下载加速**：配置了 `0x40000000` 作为 SRAM 工作区，并禁用了 DCC 模式以提高 `load` 命令的兼容性。
-
----
-
 ## 🚀 编译与运行
 1.  **编译**：`make clean && make`。
 2.  **启动网关**：`openocd -f scripts/jz2440.cfg`。
