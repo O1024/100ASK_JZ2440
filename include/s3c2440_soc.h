@@ -32,6 +32,30 @@
 #define DCDST0						__REG(0x4B00001C)
 #define DMASKTRIG0					__REG(0x4B000020)
 
+/* DMA 3 */
+#define DISRC3						__REG(0x4B0000C0)
+#define DISRCC3						__REG(0x4B0000C4)
+#define DIDST3						__REG(0x4B0000C8)
+#define DIDSTC3						__REG(0x4B0000CC)
+#define DCON3						__REG(0x4B0000D0)
+#define DSTAT3						__REG(0x4B0000D4)
+#define DCSRC3						__REG(0x4B0000D8)
+#define DCDST3						__REG(0x4B0000DC)
+#define DMASKTRIG3					__REG(0x4B0000E0)
+
+/* UART0 */
+#define ULCON0                      __REG(0x50000000)
+#define UCON0                       __REG(0x50000004)
+#define UFCON0                      __REG(0x50000008)
+#define UMCON0                      __REG(0x5000000C)
+#define UTRSTAT0                    __REG(0x50000010)
+#define UERSTAT0                    __REG(0x50000014)
+#define UFSTAT0                     __REG(0x50000018)
+#define UMSTAT0                     __REG(0x5000001C)
+#define UTXH0                       __REG(0x50000020)
+#define URXH0                       __REG(0x50000024)
+#define UBRDIV0                     __REG(0x50000028)
+
 /* GPIO - PORT F */
 #define GPFCON						__REG(0x56000050)
 #define GPFDAT						__REG(0x56000054)
@@ -39,5 +63,10 @@
 /* GPIO - PORT G */
 #define GPGCON						__REG(0x56000060)
 #define GPGDAT						__REG(0x56000064)
+
+/* GPIO - PORT H */
+#define GPHCON						__REG(0x56000070)
+#define GPHDAT						__REG(0x56000074)
+#define GPHUP						__REG(0x56000078)
 
 #endif /* __S3C2440_SOC_H__ */

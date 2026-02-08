@@ -89,7 +89,7 @@ sdram_config:
 	.word 0x00018001	@ BANKCON7
 	.word 0x008C04F4	@ REFRESH
 	.word 0x000000B1	@ BANKSIZE
-	.word 0x00000030	@ MRSRB6
+	.word 0x00000030	@ MRSRB6 (CL=3)
 	.word 0x00000030	@ MRSRB7
 
 
