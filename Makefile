@@ -2,7 +2,7 @@ CC      = arm-none-eabi-gcc
 LD      = arm-none-eabi-ld
 OBJCOPY = arm-none-eabi-objcopy
 
-CFLAGS  = -march=armv4t -Wall -Iinclude -nostdlib -fno-builtin -g
+CFLAGS  = -march=armv4t -Wall -Iinclude -nostdlib -fno-builtin -g -O2
 LDFLAGS = -T scripts/jz2440.lds
 
 OBJS    = src/cpu/start.o src/main.o
