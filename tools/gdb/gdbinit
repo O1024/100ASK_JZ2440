@@ -1,0 +1,15 @@
+set remotetimeout 120
+target extended-remote :3333
+
+# 尝试强制暂停 CPU (不复位)
+monitor halt
+
+# 稍微延时等待 Halt 成功
+shell sleep 0.5
+
+# 下载程序
+load
+
+# 设置入口断点
+break _start
+echo \nProgram loaded. Type 'continue' to start.\n
