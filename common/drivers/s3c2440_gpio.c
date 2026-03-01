@@ -10,16 +10,42 @@
 #include "s3c2440_soc.h"
 
 void hal_gpio_init_output(hal_gpio_pin_t pin) {
-    // [2n+1:2n] 设为 01 即为输出模式
-    GPFCON &= ~(3 << (pin * 2));
-    GPFCON |= (1 << (pin * 2));
+    if (pin < 100) { // GPF 组
+        GPFCON &= ~(3 << (pin * 2));
+        GPFCON |= (1 << (pin * 2));
+    } else { // GPG 组
+        int real_pin = pin - 100;
+        GPGCON &= ~(3 << (real_pin * 2));
+        GPGCON |= (1 << (real_pin * 2));
+    }
+}
+
+void hal_gpio_init_input(hal_gpio_pin_t pin) {
+    if (pin < 100) { // GPF 组
+        GPFCON &= ~(3 << (pin * 2)); // 设置为 00 (Input)
+    } else { // GPG 组
+        int real_pin = pin - 100;
+        GPGCON &= ~(3 << (real_pin * 2)); // 设置为 00 (Input)
+    }
+}
+
+hal_gpio_state_t hal_gpio_get(hal_gpio_pin_t pin) {
+    if (pin < 100) { // GPF 组
+        return (GPFDAT & (1 << pin)) ? GPIO_HIGH : GPIO_LOW;
+    } else { // GPG 组
+        int real_pin = pin - 100;
+        return (GPGDAT & (1 << real_pin)) ? GPIO_HIGH : GPIO_LOW;
+    }
 }
 
 void hal_gpio_set(hal_gpio_pin_t pin, hal_gpio_state_t state) {
-    if (state == GPIO_HIGH) {
-        GPFDAT |= (1 << pin);
-    } else {
-        GPFDAT &= ~(1 << pin);
+    if (pin < 100) { // GPF 组
+        if (state == GPIO_HIGH) GPFDAT |= (1 << pin);
+        else GPFDAT &= ~(1 << pin);
+    } else { // GPG 组
+        int real_pin = pin - 100;
+        if (state == GPIO_HIGH) GPGDAT |= (1 << real_pin);
+        else GPGDAT &= ~(1 << real_pin);
     }
 }
 

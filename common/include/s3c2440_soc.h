@@ -14,6 +14,10 @@
 #define GPFDAT      (*(volatile unsigned long *)0x56000054)
 #define GPFUP       (*(volatile unsigned long *)0x56000058)
 
+#define GPGCON      (*(volatile unsigned long *)0x56000060)
+#define GPGDAT      (*(volatile unsigned long *)0x56000064)
+#define GPGUP       (*(volatile unsigned long *)0x56000068)
+
 /* UART 寄存器 (以 UART0 为例) */
 #define ULCON0      (*(volatile unsigned long *)0x50000000)
 #define UCON0       (*(volatile unsigned long *)0x50000004)

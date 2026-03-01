@@ -15,10 +15,13 @@
  * @brief GPIO 引脚定义 (示例)
  */
 typedef enum {
+    GPF0 = 0,
+    GPF2 = 2,
     GPF4 = 4,
     GPF5 = 5,
     GPF6 = 6,
-    // 其他引脚待后续扩展
+    GPG3 = 103, // 编码规则：100 + pin_num 用于区分不同组
+    GPG11 = 111,
 } hal_gpio_pin_t;
 
 /**
@@ -33,6 +36,16 @@ typedef enum {
  * @brief 初始化 GPIO 引脚为输出模式
  */
 void hal_gpio_init_output(hal_gpio_pin_t pin);
+
+/**
+ * @brief 初始化 GPIO 引脚为输入模式
+ */
+void hal_gpio_init_input(hal_gpio_pin_t pin);
+
+/**
+ * @brief 获取 GPIO 引脚电平
+ */
+hal_gpio_state_t hal_gpio_get(hal_gpio_pin_t pin);
 
 /**
  * @brief 设置 GPIO 引脚电平
