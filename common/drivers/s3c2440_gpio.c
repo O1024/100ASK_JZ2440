@@ -23,9 +23,11 @@ void hal_gpio_init_output(hal_gpio_pin_t pin) {
 void hal_gpio_init_input(hal_gpio_pin_t pin) {
     if (pin < 100) { // GPF 组
         GPFCON &= ~(3 << (pin * 2)); // 设置为 00 (Input)
+        GPFUP  &= ~(1 << pin);       // 开启上拉 (0 表示开启)
     } else { // GPG 组
         int real_pin = pin - 100;
         GPGCON &= ~(3 << (real_pin * 2)); // 设置为 00 (Input)
+        GPGUP  &= ~(1 << real_pin);       // 开启上拉
     }
 }
 

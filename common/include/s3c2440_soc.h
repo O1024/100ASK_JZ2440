@@ -31,4 +31,13 @@
 /* 看门狗寄存器 */
 #define WTCON       (*(volatile unsigned long *)0x53000000)
 
+/* 时钟与电源管理寄存器 */
+#define LOCKTIME    (*(volatile unsigned long *)0x4C000000)
+#define MPLLCON     (*(volatile unsigned long *)0x4C000004)
+#define UPLLCON     (*(volatile unsigned long *)0x4C000008)
+#define CLKCON      (*(volatile unsigned long *)0x4C00000C)
+#define CLKDAT      (*(volatile unsigned long *)0x4C000010)
+#define CLKDIVN     (*(volatile unsigned long *)0x4C000014)
+#define CAMDIVN     (*(volatile unsigned long *)0x4C000018)
+
 #endif // __S3C2440_SOC_H__

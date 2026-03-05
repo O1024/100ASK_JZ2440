@@ -1,9 +1,9 @@
-# 项目局部 Makefile (Key Control LED)
-TARGET = key_led
+# 项目局部 Makefile (Clock Speedup)
+TARGET = clock_speedup
 TOP_DIR = ../../..
 
 # 1. 实验特有的 C 源文件
-SRCS = ../../../common/arch/s3c2440_start.S main.c
+SRCS = main.c
 
 # 2. 包含架构启动代码与通用驱动
 include $(TOP_DIR)/common/arch/arch.mk
