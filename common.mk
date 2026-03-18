@@ -1,71 +1,83 @@
-# common.mk - JZ2440 Unified SDK 共享构建规则
-# 
-# Copyright (c) 2026 JZ2440 Unified SDK Contributors
-# Distributed under the MIT License.
+# common.mk - Professional JZ2440 Unified Build Rules
 
-# 1. 工具链设置
+# --- Verbosity Control ---
+ifeq ($(V),1)
+  Q :=
+else
+  Q := @
+endif
+
+# --- Toolchain ---
 CROSS_COMPILE ?= arm-none-eabi-
-CC      = $(CROSS_COMPILE)gcc
-LD      = $(CROSS_COMPILE)ld
-OBJCOPY = $(CROSS_COMPILE)objcopy
-GDB     = gdb-multiarch
+CC      := $(CROSS_COMPILE)gcc
+LD      := $(CROSS_COMPILE)ld
+OBJCOPY := $(CROSS_COMPILE)objcopy
+OBJDUMP := $(CROSS_COMPILE)objdump
 
-# 2. 路径定义 (依赖于调用者定义的 TOP_DIR)
-COMMON_DIR = $(TOP_DIR)/common
-TOOLS_DIR  = $(TOP_DIR)/tools
+# --- Paths ---
+COMMON_DIR := $(TOP_DIR)/common
+TOOLS_DIR  := $(TOP_DIR)/tools
 
-# 3. 调试配置
-OPENOCD     = openocd
-OPENOCD_CFG = $(TOOLS_DIR)/openocd/jz2440.cfg
-GDBINIT     = $(TOOLS_DIR)/gdb/gdbinit
+# --- Sources & Objects ---
+SRCS += main.c
+include $(COMMON_DIR)/arch/arch.mk
+include $(COMMON_DIR)/drivers/drivers.mk
 
-# 4. 通用编译参数
-CFLAGS += -I$(COMMON_DIR)/include -O2 -Wall -march=armv4t -marm -fno-stack-protector
+OBJS := $(addsuffix .o, $(basename $(SRCS)))
+DEPS := $(OBJS:.o=.d)
 
-# 5. 通用构建目标
+# --- Compiler Flags ---
+INCLUDES := -I$(COMMON_DIR)/include
+CFLAGS   += $(INCLUDES) -O2 -Wall -march=armv4t -marm
+CFLAGS   += -fno-stack-protector -ffunction-sections -fdata-sections
+CFLAGS   += -MMD -MP # Dependency generation
 
-# 默认目标
-all: $(TARGET).bin
+# --- Linker Flags ---
+LDSCRIPT := $(COMMON_DIR)/jz2440.lds
+LDFLAGS  += -T $(LDSCRIPT) -nostdlib -Wl,--gc-sections -Wl,-Map,$(TARGET).map
+
+# --- Build Targets ---
+.PHONY: all clean flash openocd gdb
+
+all: $(TARGET).bin $(TARGET).dis
+	@echo "Build Complete: $(TARGET).bin"
 
 $(TARGET).bin: $(TARGET).elf
-	$(OBJCOPY) -O binary -S $< $@
+	@echo "  OBJCOPY $@"
+	$(Q)$(OBJCOPY) -O binary -S $< $@
+
+$(TARGET).dis: $(TARGET).elf
+	@echo "  OBJDUMP $@"
+	$(Q)$(OBJDUMP) -D -m arm $< > $@
 
 $(TARGET).elf: $(OBJS)
-	$(LD) -Ttext 0x0 -o $@ $^
+	@echo "  LD      $@"
+	$(Q)$(CC) $(LDFLAGS) -o $@ $^
 
 %.o: %.S
-	$(CC) $(CFLAGS) -c -o $@ $<
+	@echo "  AS      $<"
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	@echo "  CC      $<"
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin
+	@echo "  CLEAN"
+	$(Q)rm -f $(OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin $(TARGET).map $(TARGET).dis
 
-# --- 调试与烧录目标 ---
+-include $(DEPS)
 
-# 启动 OpenOCD 服务
+# --- Tools Targets ---
 openocd:
-	$(OPENOCD) -f $(OPENOCD_CFG)
+	$(Q)openocd -f $(TOOLS_DIR)/openocd/jz2440.cfg
 
-# 启动 GDB 调试
 gdb: $(TARGET).elf
-	$(GDB) -x $(GDBINIT) $<
+	$(Q)gdb-multiarch -x $(TOOLS_DIR)/gdb/gdbinit $<
 
-
-# 烧录到 NAND Flash 并重启运行
 flash: $(TARGET).bin
-	@SIZE=$$(stat -c%s $(TARGET).bin); \
-	ERASE_LEN=$$(( ($$SIZE + 0x3FFFF) & ~0x3FFFF )); \
-	echo "Flashing $(TARGET).bin (Size: $$SIZE bytes, Erase Length: 0x$$(printf "%x" $$ERASE_LEN))"; \
-	$(OPENOCD) -f $(OPENOCD_CFG) \
-		-c "init" \
-		-c "halt" \
-		-c "nand probe 0" \
-		-c "nand erase 0 0 $$(printf "0x%x" $$ERASE_LEN)" \
-		-c "nand write 0 $(TARGET).bin 0" \
-		-c "reset" \
-		-c "exit"
-
-
-.PHONY: all clean openocd gdb flash
+	$(Q)openocd -f $(TOOLS_DIR)/openocd/jz2440.cfg \
+		-c "init; halt; nand probe 0" \
+		-c "nand erase 0 0 0x40000" \
+		-c "nand write 0 $< 0" \
+		-c "reset; exit"
