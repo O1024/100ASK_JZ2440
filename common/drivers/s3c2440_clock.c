@@ -1,30 +1,35 @@
 /**
  * @file s3c2440_clock.c
- * @brief S3C2440 Clock System Implementation
+ * @brief S3C2440 Clock System Implementation (Struct-based)
  */
 
 #include "hal/hal_clock.h"
 #include "s3c2440_soc.h"
 
 void hal_clock_init(void) {
-    LOCKTIME = 0xFFFFFFFF;
-    CLKDIVN = 0x05;
+    CLK_PWR->LOCKTIME = 0xFFFFFFFF;
+    CLK_PWR->CLKDIVN = 0x05;
+    
+    /* If CLKDIVN is not 0, CPU bus mode should be changed from fast bus mode to asynchronous bus mode */
     __asm__(
         "mrc p15, 0, r1, c1, c0, 0\n"
         "orr r1, r1, #0xc0000000\n"
         "mcr p15, 0, r1, c1, c0, 0\n"
     );
-    MPLLCON = (92 << 12) | (1 << 4) | (1);
+    
+    /* FCLK = 400MHz, HCLK = 100MHz, PCLK = 50MHz */
+    CLK_PWR->MPLLCON = (92 << 12) | (1 << 4) | (1);
 }
 
 void hal_clock_reset(void) {
-    /* 默认 12MHz 配置 (或者接近 12MHz) */
-    CLKDIVN = 0;
+    CLK_PWR->CLKDIVN = 0;
+    
     __asm__(
         "mrc p15, 0, r1, c1, c0, 0\n"
         "bic r1, r1, #0xc0000000\n"
         "mcr p15, 0, r1, c1, c0, 0\n"
     );
-    /* 12MHz xtal: MDIV=0x96, PDIV=5, SDIV=2 得到约 12.06MHz */
-    MPLLCON = (0x96 << 12) | (0x05 << 4) | (0x02);
+    
+    /* 12MHz xtal: MDIV=0x96, PDIV=5, SDIV=2 */
+    CLK_PWR->MPLLCON = (0x96 << 12) | (0x05 << 4) | (0x02);
 }

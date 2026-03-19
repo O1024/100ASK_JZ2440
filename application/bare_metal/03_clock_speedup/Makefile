@@ -1,16 +1,8 @@
-# 项目局部 Makefile (Clock Speedup)
-TARGET = clock_speedup
-TOP_DIR = ../../..
+# JZ2440 Unified SDK Application Makefile
+# Usage: make [V=1] [clean|all|flash|openocd|gdb]
 
-# 1. 实验特有的 C 源文件
-SRCS = main.c
+TARGET  := clock_speedup
+TOP_DIR := ../../..
 
-# 2. 包含架构启动代码与通用驱动
-include $(TOP_DIR)/common/arch/arch.mk
-include $(TOP_DIR)/common/drivers/drivers.mk
-
-# 3. 计算所有的目标文件 (OBJS)
-OBJS = $(addsuffix .o, $(basename $(SRCS)))
-
-# 4. 包含根目录下的通用构建规则
+# All build magic (main.c auto-inclusion, HAL/LLD linkage) happens in common.mk
 include $(TOP_DIR)/common.mk
