@@ -9,5 +9,6 @@ SRCS += $(DRV_DIR)/s3c2440_gpio.c
 SRCS += $(DRV_DIR)/s3c2440_clock.c
 SRCS += $(DRV_DIR)/s3c2440_uart.c
 SRCS += $(DRV_DIR)/s3c2440_nand.c
+SRCS += $(DRV_DIR)/s3c2440_eth.c
 SRCS += $(DRV_DIR)/s3c2440_sdram.c
 SRCS += $(DRV_DIR)/s3c2440_lcd.c

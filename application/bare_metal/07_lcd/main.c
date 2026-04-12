@@ -6,9 +6,11 @@
  */
 
 #include "hal/hal_clock.h"
+#include "hal/hal_uart.h"
 #include "hal/hal_sdram.h"
 #include "hal/hal_lcd.h"
 #include "hal/hal_gpio.h"
+#include <stdint.h>
 
 /* --- Configuration --- */
 #define HEARTBEAT_LED   GPF4
@@ -26,6 +28,8 @@ static void delay(volatile int count) {
  * @brief Draw a test pattern on the LCD
  */
 static void draw_test_pattern(void) {
+    hal_uart_puts("[LCD] Drawing test pattern...\r\n");
+
     /* 1. Clear screen with a professional background color */
     hal_lcd_clear(COLOR_BLACK);
     
@@ -35,21 +39,28 @@ static void draw_test_pattern(void) {
     hal_lcd_draw_rect(350, 50, 80, 100, COLOR_YELLOW);
     
     /* 3. Draw a center crosshair */
-    /* Horizontal line */
     hal_lcd_draw_rect(0, LCD_HEIGHT/2 - 1, LCD_WIDTH, 2, COLOR_WHITE);
-    /* Vertical line */
     hal_lcd_draw_rect(LCD_WIDTH/2 - 1, 0, 2, LCD_HEIGHT, COLOR_WHITE);
+
+    hal_uart_puts("[LCD] Pattern complete.\r\n");
 }
 
 int main(void) {
-    /* 1. Hardware Initialization Sequence (Global init handled by startup code) */
+    hal_uart_puts("\r\n========================================\r\n");
+    hal_uart_puts("      JZ2440 LCD DIAGNOSTIC TOOL        \r\n");
+    hal_uart_puts("========================================\r\n");
+
+    hal_uart_puts("[LCD] Initializing controller... ");
     hal_lcd_init();
+    hal_uart_puts("DONE\r\n");
 
     /* 2. Heartbeat LED setup */
     hal_gpio_init_output(HEARTBEAT_LED);
 
     /* 3. Graphics Output */
     draw_test_pattern();
+
+    hal_uart_puts("[SYS] Entering heartbeat loop.\r\n");
 
     /* 4. Main Loop: Heartbeat */
     while (1) {

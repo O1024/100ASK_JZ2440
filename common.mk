@@ -37,7 +37,8 @@ SPL_SRCS := $(SPL_DIR)/spl_start.S \
             $(COMMON_DIR)/drivers/s3c2440_uart.c \
             $(COMMON_DIR)/drivers/s3c2440_nand.c
 
-SPL_OBJS := $(addsuffix .o, $(basename $(SPL_SRCS)))
+# Isolate SPL object files to prevent collisions with main app objects
+SPL_OBJS := $(patsubst $(TOP_DIR)/%, spl_obj/%, $(addsuffix .o, $(basename $(SPL_SRCS))))
 
 # --- Compiler Flags ---
 INCLUDES := -I$(COMMON_DIR)/include
@@ -93,6 +94,17 @@ spl.elf: $(SPL_OBJS)
 	@echo "  LD      spl.elf"
 	$(Q)$(LD) -T $(SPL_LDSCRIPT) -nostdlib --gc-sections -o $@ $^ /usr/lib/gcc/arm-none-eabi/13.2.1/libgcc.a
 
+# Special rule for SPL objects to keep them isolated
+spl_obj/%.o: $(TOP_DIR)/%.S
+	@mkdir -p $(dir $@)
+	@echo "  AS (SPL) $<"
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
+
+spl_obj/%.o: $(TOP_DIR)/%.c
+	@mkdir -p $(dir $@)
+	@echo "  CC (SPL) $<"
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
+
 # --- Generic Rules ---
 %.o: %.S
 	@echo "  AS      $<"
@@ -108,7 +120,7 @@ $(TARGET).dis: $(TARGET).elf
 
 clean:
 	@echo "  CLEAN"
-	$(Q)rm -f $(OBJS) $(DEPS) $(SPL_OBJS) *.elf *.bin *.map *.dis
+	$(Q)rm -rf $(OBJS) $(DEPS) $(SPL_OBJS) spl_obj *.elf *.bin *.map *.dis
 
 -include $(DEPS)
 
