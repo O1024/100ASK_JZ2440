@@ -33,3 +33,12 @@ void hal_clock_reset(void) {
     /* 12MHz xtal: MDIV=0x96, PDIV=5, SDIV=2 */
     CLK_PWR->MPLLCON = (0x96 << 12) | (0x05 << 4) | (0x02);
 }
+
+uint32_t hal_clock_get_pclk(void) {
+    /* Since we only support fixed configurations for now, we return 50MHz or 12MHz based on MPLL */
+    if (CLK_PWR->MPLLCON == ((92 << 12) | (1 << 4) | (1))) {
+        return 50000000;
+    } else {
+        return 12000000;
+    }
+}

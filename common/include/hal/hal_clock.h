@@ -1,26 +1,26 @@
 /**
  * @file hal_clock.h
- * @brief Clock System HAL Interface for S3C2440
- * 
- * Copyright (c) 2026 JZ2440 Unified SDK Contributors
- * Distributed under the MIT License.
+ * @brief Clock HAL Interface for JZ2440
  */
 
 #ifndef __HAL_CLOCK_H__
 #define __HAL_CLOCK_H__
 
+#include <stdint.h>
+
 /**
- * @brief 初始化系统时钟
- * 
- * 将 FCLK 提升至 400MHz, HCLK 设为 100MHz, PCLK 设为 50MHz
+ * @brief 初始化时钟系统 (默认 FCLK=400MHz, HCLK=100MHz, PCLK=50MHz)
  */
 void hal_clock_init(void);
 
 /**
- * @brief 重置系统时钟
- * 
- * 将时钟恢复到默认的 12MHz 旁路模式
+ * @brief 重置时钟为默认频率 (12MHz)
  */
 void hal_clock_reset(void);
+
+/**
+ * @brief 获取当前 PCLK 频率 (单位: Hz)
+ */
+uint32_t hal_clock_get_pclk(void);
 
 #endif // __HAL_CLOCK_H__

@@ -64,7 +64,8 @@ typedef struct {
     volatile uint8_t  _pad0[3];
     volatile uint8_t  NFADDR;
     volatile uint8_t  _pad1[3];
-    volatile uint32_t NFDATA;
+    volatile uint8_t  NFDATA;
+    volatile uint8_t  _pad2[3];
     volatile uint32_t NFMECCD0;
     volatile uint32_t NFMECCD1;
     volatile uint32_t NFSECCD;

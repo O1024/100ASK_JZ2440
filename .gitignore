@@ -14,3 +14,5 @@ GEMINI.md
 # --- Documentation (Optional) ---
 # 如果你想保留 docs/ 目录，不要加下面这行
 # docs/*.pdf
+
+compile_commands.json

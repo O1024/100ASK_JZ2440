@@ -22,6 +22,7 @@ TOOLS_DIR  := $(TOP_DIR)/tools
 SRCS += main.c
 include $(COMMON_DIR)/arch/arch.mk
 include $(COMMON_DIR)/drivers/drivers.mk
+include $(COMMON_DIR)/lib/lib.mk
 
 OBJS := $(addsuffix .o, $(basename $(SRCS)))
 DEPS := $(OBJS:.o=.d)
@@ -34,7 +35,7 @@ CFLAGS   += -MMD -MP # Dependency generation
 
 # --- Linker Flags ---
 LDSCRIPT := $(COMMON_DIR)/jz2440.lds
-LDFLAGS  += -T $(LDSCRIPT) -nostdlib -Wl,--gc-sections -Wl,-Map,$(TARGET).map
+LDFLAGS  += -T $(LDSCRIPT) -nostdlib /usr/lib/gcc/arm-none-eabi/13.2.1/libgcc.a -Wl,--gc-sections -Wl,-Map,$(TARGET).map
 
 # --- Build Targets ---
 .PHONY: all clean flash openocd gdb
@@ -52,7 +53,7 @@ $(TARGET).dis: $(TARGET).elf
 
 $(TARGET).elf: $(OBJS)
 	@echo "  LD      $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $^
+	$(Q)$(LD) -T $(LDSCRIPT) -nostdlib --gc-sections -Map $(TARGET).map -o $@ $^ /usr/lib/gcc/arm-none-eabi/13.2.1/libgcc.a
 
 %.o: %.S
 	@echo "  AS      $<"
