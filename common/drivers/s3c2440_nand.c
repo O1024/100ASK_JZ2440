@@ -17,19 +17,25 @@
 #define CMD_ERASE2      0xD0
 #define CMD_READSTATUS  0x70
 
-/* --- Helper Macros --- */
-#define NAND_SELECT()   do { NAND->NFCONT &= ~(1 << 1); for(volatile int i=0; i<20; i++); } while(0)
-#define NAND_DESELECT() do { NAND->NFCONT |=  (1 << 1); for(volatile int i=0; i<20; i++); } while(0)
-#define NAND_WAIT()     do { \
-                            for(volatile int i=0; i<50; i++); \
-                            uint32_t timeout = 1000000; \
-                            while (!(NAND->NFSTAT & 0x01) && timeout--); \
-                        } while(0)
+/* --- Helper Functions --- */
+#define NAND_SELECT()   do { NAND->NFCONT &= ~(1 << 1); for(volatile int i=0; i<50; i++); } while(0)
+#define NAND_DESELECT() do { NAND->NFCONT |=  (1 << 1); for(volatile int i=0; i<50; i++); } while(0)
+
+static int nand_wait_ready(void) {
+    volatile int i;
+    uint32_t timeout = 1000000; /* ~100ms on 400MHz */
+    for (i = 0; i < 50; i++);   /* Pre-delay for RnB sync */
+    while (!(NAND->NFSTAT & 0x01)) {
+        if (timeout-- == 0) return -1;
+    }
+    return 0;
+}
 
 static void send_cmd(uint8_t cmd) {
     NAND->NFCMMD = cmd;
     for(volatile int i=0; i<10; i++);
 }
+
 
 static void send_addr(uint8_t addr) {
     NAND->NFADDR = addr;
@@ -49,7 +55,7 @@ void hal_nand_init(void) {
     /* Reset */
     NAND_SELECT();
     send_cmd(CMD_RESET);
-    NAND_WAIT();
+    nand_wait_ready();
     NAND_DESELECT();
 }
 
@@ -70,7 +76,10 @@ int hal_nand_erase_block(uint32_t block_num) {
     send_addr((row >> 8) & 0xFF);
     send_addr((row >> 16) & 0xFF);
     send_cmd(CMD_ERASE2);
-    NAND_WAIT();
+    if (nand_wait_ready() != 0) {
+        NAND_DESELECT();
+        return -1;
+    }
 
     send_cmd(CMD_READSTATUS);
     uint8_t status = NAND->NFDATA;
@@ -95,7 +104,10 @@ int hal_nand_write_page(uint32_t block, uint32_t page, const uint8_t *buffer) {
     }
 
     send_cmd(CMD_PAGEPROG2);
-    NAND_WAIT();
+    if (nand_wait_ready() != 0) {
+        NAND_DESELECT();
+        return -1;
+    }
     send_cmd(CMD_READSTATUS);
     uint8_t status = NAND->NFDATA;
     NAND_DESELECT();
@@ -113,7 +125,10 @@ int hal_nand_read_page(uint32_t block, uint32_t page, uint8_t *buffer) {
     send_addr((row >> 8) & 0xFF);
     send_addr((row >> 16) & 0xFF);
     send_cmd(CMD_READ1);
-    NAND_WAIT();
+    if (nand_wait_ready() != 0) {
+        NAND_DESELECT();
+        return -1;
+    }
 
     for (int i = 0; i < NAND_PAGE_SIZE; i++) {
         buffer[i] = NAND->NFDATA;
@@ -121,6 +136,27 @@ int hal_nand_read_page(uint32_t block, uint32_t page, uint8_t *buffer) {
     }
 
     NAND_DESELECT();
+    return 0;
+}
+
+/**
+ * @brief High-level NAND read supporting multi-page cross-boundary access
+ * 
+ * Used by SPL for relocation and by App for data loading.
+ */
+int hal_nand_read(uint8_t *dest, uint32_t src_offset, uint32_t size) {
+    uint32_t page_idx = src_offset / NAND_PAGE_SIZE;
+    uint32_t current_size = 0;
+
+    while (current_size < size) {
+        /* In our simple implementation, we assume 2KB alignment for src_offset */
+        /* block = page_idx / 64, page = page_idx % 64 */
+        if (hal_nand_read_page(page_idx / 64, page_idx % 64, dest + current_size) != 0) {
+            return -1;
+        }
+        current_size += NAND_PAGE_SIZE;
+        page_idx++;
+    }
     return 0;
 }
 
@@ -134,7 +170,10 @@ int hal_nand_check_bad_block(uint32_t block) {
         send_addr((row >> 8) & 0xFF);
         send_addr((row >> 16) & 0xFF);
         send_cmd(CMD_READ1);
-        NAND_WAIT();
+        if (nand_wait_ready() != 0) {
+            NAND_DESELECT();
+            return 1; /* Assume bad on timeout */
+        }
         uint8_t mark = NAND->NFDATA;
         NAND_DESELECT();
         if (mark != 0xFF) return 1;

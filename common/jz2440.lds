@@ -1,16 +1,16 @@
 /**
  * @file jz2440.lds
- * @brief Professional Linker Script for JZ2440
+ * @brief Unified Linker Script for JZ2440 (Supports SRAM and SDRAM)
  */
 
 ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x00000000;
+    /* . will be set by -Ttext in LDFLAGS, default to 0x00000000 */
 
     .text : {
-        KEEP(*s3c2440_start.o(.text))
+        *s3c2440_start.o(.text)
         *(.text .text.*)
     }
 

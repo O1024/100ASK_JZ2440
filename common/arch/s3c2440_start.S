@@ -1,6 +1,9 @@
 /**
  * @file s3c2440_start.S
  * @brief Professional ARM920T Startup Code with Vector Table and BSS Init
+ * 
+ * This code handles the Stage 2 entry point. It can be jumped to by SPL
+ * (running in SDRAM) or run directly from SRAM for smaller experiments.
  */
 
 .text
@@ -19,15 +22,18 @@ _start:
 
 reset_handler:
     /* 2. Hardware Initialization */
-    /* Disable Watchdog */
+    /* Disable Watchdog (Safety redundancy for Stage 2) */
     ldr r0, =0x53000000
     mov r1, #0
     str r1, [r0]
 
-    /* 3. Stack Initialization (Prepare for C) 
-     * NAND Boot: internal SRAM (4KB) is mapped to 0x0
-     */
-    ldr sp, =4096
+    /* 3. Stack Initialization (Prepare for C) */
+    /* Automatic detection: If PC > 0x30000000, we are in SDRAM */
+    adr r0, _start
+    ldr r1, =0x30000000
+    cmp r0, r1
+    ldrge sp, =0x34000000   /* SDRAM path: 64MB top */
+    ldrlt sp, =4096         /* SRAM path: 4KB top */
 
     /* 4. Clear BSS Section (Mandatory for C Runtime) */
     ldr r0, =__bss_start

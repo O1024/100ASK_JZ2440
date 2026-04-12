@@ -42,9 +42,7 @@ static void draw_test_pattern(void) {
 }
 
 int main(void) {
-    /* 1. Hardware Initialization Sequence */
-    hal_clock_init();
-    hal_sdram_init(); /* LCD Framebuffer resides in SDRAM */
+    /* 1. Hardware Initialization Sequence (Global init handled by startup code) */
     hal_lcd_init();
 
     /* 2. Heartbeat LED setup */

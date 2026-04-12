@@ -3,6 +3,7 @@
 
 TARGET  := nand
 TOP_DIR := ../../..
+TEXT_BASE := 0x30000000
 
 # All build magic (main.c auto-inclusion, HAL/LLD linkage) happens in common.mk
 include $(TOP_DIR)/common.mk
