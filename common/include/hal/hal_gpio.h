@@ -38,10 +38,40 @@ typedef enum {
 } hal_gpio_pull_t;
 
 /* --- Core API --- */
+/**
+ * @brief Initialize a GPIO pin as an output.
+ * 
+ * @param pin   The GPIO pin to initialize (e.g., GPF4).
+ */
 void hal_gpio_init_output(hal_gpio_pin_t pin);
+
+/**
+ * @brief Initialize a GPIO pin as an input with pull-up configuration.
+ * 
+ * @param pin   The GPIO pin to initialize (e.g., GPF0).
+ * @param pull  Pull-up state (GPIO_PULL_UP_ENABLE or GPIO_PULL_UP_DISABLE).
+ */
 void hal_gpio_init_input(hal_gpio_pin_t pin, hal_gpio_pull_t pull);
+/**
+ * @brief Set the output state of a GPIO pin.
+ * 
+ * @param pin   The GPIO pin to set (e.g., GPIO_GPF4).
+ * @param state The target state (GPIO_LOW or GPIO_HIGH).
+ */
 void hal_gpio_set(hal_gpio_pin_t pin, hal_gpio_state_t state);
+/**
+ * @brief Get the current state of a GPIO pin.
+ * 
+ * @param pin   The GPIO pin to read.
+ * @return      The current state (GPIO_LOW or GPIO_HIGH).
+ */
 hal_gpio_state_t hal_gpio_get(hal_gpio_pin_t pin);
+
+/**
+ * @brief Toggle the output state of a GPIO pin.
+ * 
+ * @param pin   The GPIO pin to toggle.
+ */
 void hal_gpio_toggle(hal_gpio_pin_t pin);
 
 #endif /* __HAL_GPIO_H__ */

@@ -35,6 +35,9 @@ void hal_gpio_init_input(hal_gpio_pin_t pin, hal_gpio_pull_t pull) {
     }
 }
 
+/**
+ * @brief Set the output state of a GPIO pin.
+ */
 void hal_gpio_set(hal_gpio_pin_t pin, hal_gpio_state_t state) {
     uint32_t port_idx = GPIO_PORT_GET(pin);
     uint32_t bit      = GPIO_PIN_GET(pin);
@@ -55,6 +58,9 @@ hal_gpio_state_t hal_gpio_get(hal_gpio_pin_t pin) {
     return (port->DAT & (1 << bit)) ? GPIO_HIGH : GPIO_LOW;
 }
 
+/**
+ * @brief Toggle the output state of a GPIO pin.
+ */
 void hal_gpio_toggle(hal_gpio_pin_t pin) {
     uint32_t port_idx = GPIO_PORT_GET(pin);
     uint32_t bit      = GPIO_PIN_GET(pin);

@@ -57,7 +57,7 @@ ifeq ($(shell printf "%d" $(TEXT_BASE) 2>/dev/null || echo 0), 805306368)
   BUILD_SPL := 1
 endif
 
-.PHONY: all clean flash openocd gdb
+.PHONY: all clean flash flash_nor openocd gdb
 
 # --- Build Targets ---
 all: $(TARGET).bin $(TARGET).dis
@@ -136,4 +136,11 @@ flash: $(TARGET).bin
 		-c "init; halt; nand probe 0" \
 		-c "nand erase 0 0 0x80000" \
 		-c "nand write 0 $< 0" \
+		-c "reset; exit"
+
+flash_nor: $(TARGET).bin
+	$(Q)openocd -f $(TOOLS_DIR)/openocd/jz2440.cfg \
+		-c "init; halt; flash protect 0 0 last off" \
+		-c "flash erase_sector 0 0 last" \
+		-c "flash write_image $< 0 bin" \
 		-c "reset; exit"
