@@ -14,6 +14,12 @@ LD      := $(CROSS_COMPILE)ld
 OBJCOPY := $(CROSS_COMPILE)objcopy
 OBJDUMP := $(CROSS_COMPILE)objdump
 
+# Get libgcc.a path automatically
+LIBGCC  := $(shell $(CC) -print-libgcc-file-name)
+
+# --- Boot Media ---
+export BOOT_MEDIA ?= nand
+
 # --- Paths ---
 COMMON_DIR := $(TOP_DIR)/common
 SPL_DIR    := $(COMMON_DIR)/spl
@@ -30,12 +36,22 @@ OBJS := $(addsuffix .o, $(basename $(SRCS)))
 DEPS := $(OBJS:.o=.d)
 
 # --- Stage 1: SPL Sources ---
-SPL_SRCS := $(SPL_DIR)/spl_start.S \
-            $(SPL_DIR)/spl_main.c \
-            $(COMMON_DIR)/drivers/s3c2440_clock.c \
-            $(COMMON_DIR)/drivers/s3c2440_sdram.c \
-            $(COMMON_DIR)/drivers/s3c2440_uart.c \
-            $(COMMON_DIR)/drivers/s3c2440_nand.c
+ifeq ($(BOOT_MEDIA),nor)
+  SPL_SRCS := $(SPL_DIR)/spl_nor_start.S \
+              $(SPL_DIR)/spl_nor_main.c \
+              $(COMMON_DIR)/drivers/s3c2440_clock.c \
+              $(COMMON_DIR)/drivers/s3c2440_sdram.c \
+              $(COMMON_DIR)/drivers/s3c2440_uart.c
+  SPL_LDSCRIPT := $(SPL_DIR)/spl_nor.lds
+else
+  SPL_SRCS := $(SPL_DIR)/spl_start.S \
+              $(SPL_DIR)/spl_main.c \
+              $(COMMON_DIR)/drivers/s3c2440_clock.c \
+              $(COMMON_DIR)/drivers/s3c2440_sdram.c \
+              $(COMMON_DIR)/drivers/s3c2440_uart.c \
+              $(COMMON_DIR)/drivers/s3c2440_nand.c
+  SPL_LDSCRIPT := $(SPL_DIR)/spl.lds
+endif
 
 # Isolate SPL object files to prevent collisions with main app objects
 SPL_OBJS := $(patsubst $(TOP_DIR)/%, spl_obj/%, $(addsuffix .o, $(basename $(SPL_SRCS))))
@@ -50,7 +66,6 @@ CFLAGS   += -MMD -MP
 # --- Linker Flags & TEXT_BASE ---
 TEXT_BASE ?= 0x00000000
 LDSCRIPT     := $(COMMON_DIR)/jz2440.lds
-SPL_LDSCRIPT := $(SPL_DIR)/spl.lds
 
 # Detect if we need SPL (If TEXT_BASE is 0x30000000)
 ifeq ($(shell printf "%d" $(TEXT_BASE) 2>/dev/null || echo 0), 805306368)
@@ -61,7 +76,7 @@ endif
 
 # --- Build Targets ---
 all: $(TARGET).bin $(TARGET).dis
-	@echo "Build Complete: $(TARGET).bin (SPL: $(if $(BUILD_SPL),YES,NO))"
+	@echo "Build Complete: $(TARGET).bin (SPL: $(if $(BUILD_SPL),YES,NO), Media: $(BOOT_MEDIA))"
 
 # 1. Final Binary Rule
 ifeq ($(BUILD_SPL),1)
@@ -77,7 +92,7 @@ endif
 # 2. Main Application ELF (Always linked at TEXT_BASE)
 $(TARGET).elf: $(OBJS)
 	@echo "  LD      $@"
-	$(Q)$(LD) -T $(LDSCRIPT) -Ttext $(TEXT_BASE) -nostdlib --gc-sections -o $@ $^ /usr/lib/gcc/arm-none-eabi/13.2.1/libgcc.a
+	$(Q)$(LD) -T $(LDSCRIPT) -Ttext $(TEXT_BASE) -nostdlib --gc-sections -o $@ $^ $(LIBGCC)
 
 # 3. Intermediate App Binary (Only for SPL mode)
 app.bin: $(TARGET).elf
@@ -92,7 +107,7 @@ spl.bin: spl.elf
 
 spl.elf: $(SPL_OBJS)
 	@echo "  LD      spl.elf"
-	$(Q)$(LD) -T $(SPL_LDSCRIPT) -nostdlib --gc-sections -o $@ $^ /usr/lib/gcc/arm-none-eabi/13.2.1/libgcc.a
+	$(Q)$(LD) -T $(SPL_LDSCRIPT) -nostdlib --gc-sections -o $@ $^ $(LIBGCC)
 
 # Special rule for SPL objects to keep them isolated
 spl_obj/%.o: $(TOP_DIR)/%.S
@@ -138,9 +153,10 @@ flash: $(TARGET).bin
 		-c "nand write 0 $< 0" \
 		-c "reset; exit"
 
-flash_nor: $(TARGET).bin
+flash_nor: 
+	$(MAKE) BOOT_MEDIA=nor $(TARGET).bin
 	$(Q)openocd -f $(TOOLS_DIR)/openocd/jz2440.cfg \
 		-c "init; halt; flash protect 0 0 last off" \
 		-c "flash erase_sector 0 0 last" \
-		-c "flash write_image $< 0 bin" \
+		-c "flash write_image $(TARGET).bin 0" \
 		-c "reset; exit"
