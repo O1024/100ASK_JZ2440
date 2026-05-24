@@ -62,8 +62,8 @@ void hal_uart_putc(char c) {
  * @brief Receive a single character (Blocking)
  */
 char hal_uart_getc(void) {
-    /* Wait until RX FIFO has data */
-    while ((UART0->UFSTAT & UFSTAT_RX_COUNT) == 0);
+    /* Wait until RX FIFO has data (Count > 0 OR Full bit is set) */
+    while ((UART0->UFSTAT & (UFSTAT_RX_COUNT | UFSTAT_RX_FULL)) == 0);
     
     /* Read data from receive register */
     return (char)UART0->URXH;
@@ -84,7 +84,7 @@ void hal_uart_puts(const char *str) {
 }
 
 int hal_uart_tstc(void) {
-    return (UART0->UFSTAT & UFSTAT_RX_COUNT) ? 1 : 0;
+    return (UART0->UFSTAT & (UFSTAT_RX_COUNT | UFSTAT_RX_FULL)) ? 1 : 0;
 }
 
 int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
@@ -92,8 +92,8 @@ int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
     uint16_t start = hal_timer4_get_ticks();
     uint32_t elapsed = 0;
     
-    /* Wait until RX FIFO has data */
-    while ((UART0->UFSTAT & UFSTAT_RX_COUNT) == 0) {
+    /* Wait until RX FIFO has data (Count > 0 OR Full bit is set) */
+    while ((UART0->UFSTAT & (UFSTAT_RX_COUNT | UFSTAT_RX_FULL)) == 0) {
         uint16_t current = hal_timer4_get_ticks();
         
         if (current <= start) {
