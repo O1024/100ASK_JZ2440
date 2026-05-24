@@ -25,6 +25,9 @@
 void hal_nand_init(void);
 void hal_nand_read_id(uint8_t *id_buf);
 int  hal_nand_read(uint8_t *dest, uint32_t src_offset, uint32_t size);
+int  hal_nand_write(const uint8_t *src, uint32_t dest_offset, uint32_t size);
+int  hal_nand_erase(uint32_t offset);
+
 int  hal_nand_erase_block(uint32_t block_num);
 int  hal_nand_write_page(uint32_t block, uint32_t page, const uint8_t *buffer);
 int  hal_nand_read_page(uint32_t block, uint32_t page, uint8_t *buffer);

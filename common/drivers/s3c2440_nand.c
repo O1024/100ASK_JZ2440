@@ -149,15 +149,32 @@ int hal_nand_read(uint8_t *dest, uint32_t src_offset, uint32_t size) {
     uint32_t current_size = 0;
 
     while (current_size < size) {
-        /* In our simple implementation, we assume 2KB alignment for src_offset */
-        /* block = page_idx / 64, page = page_idx % 64 */
-        if (hal_nand_read_page(page_idx / 64, page_idx % 64, dest + current_size) != 0) {
+        if (hal_nand_read_page(page_idx / NAND_PAGES_PER_BLOCK, page_idx % NAND_PAGES_PER_BLOCK, dest + current_size) != 0) {
             return -1;
         }
         current_size += NAND_PAGE_SIZE;
         page_idx++;
     }
     return 0;
+}
+
+int hal_nand_write(const uint8_t *src, uint32_t dest_offset, uint32_t size) {
+    uint32_t page_idx = dest_offset / NAND_PAGE_SIZE;
+    uint32_t current_size = 0;
+
+    while (current_size < size) {
+        if (hal_nand_write_page(page_idx / NAND_PAGES_PER_BLOCK, page_idx % NAND_PAGES_PER_BLOCK, src + current_size) != 0) {
+            return -1;
+        }
+        current_size += NAND_PAGE_SIZE;
+        page_idx++;
+    }
+    return 0;
+}
+
+int hal_nand_erase(uint32_t offset) {
+    uint32_t block_num = offset / NAND_BLOCK_SIZE;
+    return hal_nand_erase_block(block_num);
 }
 
 int hal_nand_check_bad_block(uint32_t block) {

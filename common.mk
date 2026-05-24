@@ -1,162 +1,110 @@
-# common.mk - Professional JZ2440 Unified Build Rules (Refined SPL Logic)
+# common.mk - Unified JZ2440 Build System (Refactored for NOR Boot)
 
-# --- Verbosity Control ---
-ifeq ($(V),1)
-  Q :=
-else
-  Q := @
-endif
-
-# --- Toolchain ---
+V ?= 0
+Q := $(if $(filter 1,$(V)),,@)
 CROSS_COMPILE ?= arm-none-eabi-
 CC      := $(CROSS_COMPILE)gcc
-LD      := $(CROSS_COMPILE)ld
 OBJCOPY := $(CROSS_COMPILE)objcopy
 OBJDUMP := $(CROSS_COMPILE)objdump
+SIZE    := $(CROSS_COMPILE)size
 
-# Get libgcc.a path automatically
-LIBGCC  := $(shell $(CC) -print-libgcc-file-name)
+# --- Configuration ---
+# RAM_TARGET: isram (0x40000000, 4KB) or sdram (0x30000000, 64MB)
+RAM_TARGET ?= isram
+TOP_DIR    ?= .
 
-# --- Boot Media ---
-export BOOT_MEDIA ?= nand
-
-# --- Paths ---
 COMMON_DIR := $(TOP_DIR)/common
-SPL_DIR    := $(COMMON_DIR)/spl
 ARCH_DIR   := $(COMMON_DIR)/arch
-TOOLS_DIR  := $(TOP_DIR)/tools
+LDS_DIR    := $(COMMON_DIR)/lds
+DRIVERS_DIR := $(COMMON_DIR)/drivers
+INCLUDE_DIR := $(COMMON_DIR)/include
 
-# --- Stage 2: Main Application Sources ---
+ROM_ADDR := 0x00000000
+
+ifeq ($(RAM_TARGET),sdram)
+    RAM_ADDR  := 0x30000000
+    STACK_TOP := 0x34000000
+    CFLAGS    += -DTARGET_SDRAM
+else
+    RAM_ADDR  := 0x40000000
+    STACK_TOP := 0x40001000
+    CFLAGS    += -DTARGET_ISRAM
+endif
+
+# --- Sources ---
+SRCS += $(ARCH_DIR)/start.S $(COMMON_DIR)/boot/relocate.c
+include $(DRIVERS_DIR)/drivers.mk
 SRCS += main.c
-include $(COMMON_DIR)/arch/arch.mk
-include $(COMMON_DIR)/drivers/drivers.mk
-include $(COMMON_DIR)/lib/lib.mk
 
 OBJS := $(addsuffix .o, $(basename $(SRCS)))
 DEPS := $(OBJS:.o=.d)
 
-# --- Stage 1: SPL Sources ---
-ifeq ($(BOOT_MEDIA),nor)
-  SPL_SRCS := $(SPL_DIR)/spl_nor_start.S \
-              $(SPL_DIR)/spl_nor_main.c \
-              $(COMMON_DIR)/drivers/s3c2440_clock.c \
-              $(COMMON_DIR)/drivers/s3c2440_sdram.c \
-              $(COMMON_DIR)/drivers/s3c2440_uart.c
-  SPL_LDSCRIPT := $(SPL_DIR)/spl_nor.lds
-else
-  SPL_SRCS := $(SPL_DIR)/spl_start.S \
-              $(SPL_DIR)/spl_main.c \
-              $(COMMON_DIR)/drivers/s3c2440_clock.c \
-              $(COMMON_DIR)/drivers/s3c2440_sdram.c \
-              $(COMMON_DIR)/drivers/s3c2440_uart.c \
-              $(COMMON_DIR)/drivers/s3c2440_nand.c
-  SPL_LDSCRIPT := $(SPL_DIR)/spl.lds
-endif
-
-# Isolate SPL object files to prevent collisions with main app objects
-SPL_OBJS := $(patsubst $(TOP_DIR)/%, spl_obj/%, $(addsuffix .o, $(basename $(SPL_SRCS))))
-
 # --- Compiler Flags ---
-INCLUDES := -I$(COMMON_DIR)/include
-CFLAGS   += $(INCLUDES) -O2 -Wall -march=armv4t -marm
-CFLAGS   += -fno-stack-protector -ffunction-sections -fdata-sections
-CFLAGS   += -fno-builtin
-CFLAGS   += -MMD -MP
+INCLUDES := -I$(INCLUDE_DIR)
+CFLAGS   += $(INCLUDES) -O2 -Wall -march=armv4t -marm \
+            -fno-stack-protector -ffunction-sections -fdata-sections \
+            -fno-builtin -MMD -MP \
+            -DTEXT_BASE=$(ROM_ADDR) \
+            -DDATA_BASE=$(RAM_ADDR) \
+            -DSTACK_TOP=$(STACK_TOP)
 
-# --- Linker Flags & TEXT_BASE ---
-TEXT_BASE ?= 0x00000000
-LDSCRIPT     := $(COMMON_DIR)/jz2440.lds
+LDFLAGS  := -nostartfiles -Wl,--gc-sections -L $(LDS_DIR) -T $(LDS_DIR)/jz2440.lds \
+            -Wl,--defsym=_ROM_START=$(ROM_ADDR) -Wl,--defsym=_RAM_START=$(RAM_ADDR)
 
-# Detect if we need SPL (If TEXT_BASE is 0x30000000)
-ifeq ($(shell printf "%d" $(TEXT_BASE) 2>/dev/null || echo 0), 805306368)
-  BUILD_SPL := 1
-endif
+.PHONY: all clean flash flash_nor flash_nand openocd gdb
 
-.PHONY: all clean flash flash_nor openocd gdb
-
-# --- Build Targets ---
 all: $(TARGET).bin $(TARGET).dis
-	@echo "Build Complete: $(TARGET).bin (SPL: $(if $(BUILD_SPL),YES,NO), Media: $(BOOT_MEDIA))"
+	$(Q)TEXT_SZ=$$( $(SIZE) $(TARGET).elf | awk 'NR==2 {print $$1}' ); \
+	DATA_SZ=$$( $(SIZE) $(TARGET).elf | awk 'NR==2 {print $$2}' ); \
+	BSS_SZ=$$( $(SIZE) $(TARGET).elf | awk 'NR==2 {print $$3}' ); \
+	NOR_USE=$$(($$TEXT_SZ + $$DATA_SZ)); \
+	RAM_USE=$$(($$DATA_SZ + $$BSS_SZ)); \
+	if [ "$(RAM_TARGET)" = "sdram" ]; then RAM_MAX=67108864; else RAM_MAX=4096; fi; \
+	RAM_PCT=$$(($$RAM_USE * 100 / $$RAM_MAX)); \
+	echo "------------------------------------------------"; \
+	echo "Build Success: $(TARGET).bin"; \
+	echo "RAM Target:  $(RAM_TARGET)"; \
+	echo "Sections:    text=$$TEXT_SZ, data=$$DATA_SZ, bss=$$BSS_SZ (bytes)"; \
+	echo "NOR Usage:   $$NOR_USE bytes"; \
+	echo "RAM Usage:   $$RAM_USE / $$RAM_MAX bytes ($$RAM_PCT%)"; \
+	echo "------------------------------------------------"
 
-# 1. Final Binary Rule
-ifeq ($(BUILD_SPL),1)
-$(TARGET).bin: spl.bin app.bin
-	@echo "  GEN     $@"
-	$(Q)cat spl.bin app.bin > $@
-else
 $(TARGET).bin: $(TARGET).elf
-	@echo "  OBJCOPY $@"
 	$(Q)$(OBJCOPY) -O binary -S $< $@
-endif
 
-# 2. Main Application ELF (Always linked at TEXT_BASE)
 $(TARGET).elf: $(OBJS)
-	@echo "  LD      $@"
-	$(Q)$(LD) -T $(LDSCRIPT) -Ttext $(TEXT_BASE) -nostdlib --gc-sections -o $@ $^ $(LIBGCC)
+	@echo "  LD      $@ (using $(LDS_DIR)/jz2440.lds)"
+	@if [ "$(V)" = "1" ]; then echo "  LDFLAGS: $(LDFLAGS)"; fi
+	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-# 3. Intermediate App Binary (Only for SPL mode)
-app.bin: $(TARGET).elf
-	$(Q)$(OBJCOPY) -O binary -S $< $@
-
-# 4. SPL Binary (Linked at 0x0, strictly padded to 4KB)
-spl.bin: spl.elf
-	@echo "  OBJCOPY spl.bin"
-	$(Q)$(OBJCOPY) -O binary -S $< spl.tmp.bin
-	$(Q)dd if=spl.tmp.bin of=$@ bs=4096 conv=sync status=none
-	$(Q)rm spl.tmp.bin
-
-spl.elf: $(SPL_OBJS)
-	@echo "  LD      spl.elf"
-	$(Q)$(LD) -T $(SPL_LDSCRIPT) -nostdlib --gc-sections -o $@ $^ $(LIBGCC)
-
-# Special rule for SPL objects to keep them isolated
-spl_obj/%.o: $(TOP_DIR)/%.S
-	@mkdir -p $(dir $@)
-	@echo "  AS (SPL) $<"
-	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
-
-spl_obj/%.o: $(TOP_DIR)/%.c
-	@mkdir -p $(dir $@)
-	@echo "  CC (SPL) $<"
-	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
-
-# --- Generic Rules ---
 %.o: %.S
 	@echo "  AS      $<"
+	@if [ "$(V)" = "1" ]; then echo "  CFLAGS: $(CFLAGS)"; fi
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.c
 	@echo "  CC      $<"
+	@if [ "$(V)" = "1" ]; then echo "  CFLAGS: $(CFLAGS)"; fi
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 $(TARGET).dis: $(TARGET).elf
-	@echo "  OBJDUMP $@"
 	$(Q)$(OBJDUMP) -D -m arm $< > $@
 
 clean:
-	@echo "  CLEAN"
-	$(Q)rm -rf $(OBJS) $(DEPS) $(SPL_OBJS) spl_obj *.elf *.bin *.map *.dis
+	$(Q)rm -rf $(OBJS) $(DEPS) *.elf *.bin *.map *.dis
 
--include $(DEPS)
-
-# --- Tool Integration ---
 openocd:
-	$(Q)openocd -f $(TOOLS_DIR)/openocd/jz2440.cfg
+	$(Q)openocd -f $(TOP_DIR)/tools/openocd/jz2440.cfg
 
 gdb: $(TARGET).elf
-	$(Q)gdb-multiarch -x $(TOOLS_DIR)/gdb/gdbinit $<
+	$(Q)gdb-multiarch -x $(TOP_DIR)/tools/gdb/gdbinit $<
 
-flash: $(TARGET).bin
-	$(Q)openocd -f $(TOOLS_DIR)/openocd/jz2440.cfg \
-		-c "init; halt; nand probe 0" \
-		-c "nand erase 0 0 0x80000" \
-		-c "nand write 0 $< 0" \
-		-c "reset; exit"
+flash: flash_nor
 
-flash_nor: 
-	$(MAKE) BOOT_MEDIA=nor $(TARGET).bin
-	$(Q)openocd -f $(TOOLS_DIR)/openocd/jz2440.cfg \
-		-c "init; halt; flash protect 0 0 last off" \
-		-c "flash erase_sector 0 0 last" \
-		-c "flash write_image $(TARGET).bin 0" \
-		-c "reset; exit"
+flash_nor: $(TARGET).bin
+	$(Q)openocd -f $(TOP_DIR)/tools/openocd/jz2440.cfg -c "init; halt; flash erase_sector 0 0 last; flash write_image $< 0; reset; exit"
+
+flash_nand: $(TARGET).bin
+	$(Q)openocd -f $(TOP_DIR)/tools/openocd/jz2440.cfg -c "init; halt; nand probe 0; nand erase 0 0 0x80000; nand write 0 $< 0; reset; exit"
+
+-include $(DEPS)

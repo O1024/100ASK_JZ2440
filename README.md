@@ -65,7 +65,7 @@
 ### 2. 编译示例
 进入任意应用目录执行 `make`。SDK 默认采用静默编译，以突出关键警告：
 ```bash
-cd application/bare_metal/01_led_chaser
+cd application/bare_metal/01_demo_led
 make
 ```
 *提示：使用 `make V=1` 可查看完整的编译命令。*

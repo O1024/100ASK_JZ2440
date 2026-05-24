@@ -19,6 +19,9 @@ void hal_clock_init(void) {
     
     /* FCLK = 400MHz, HCLK = 100MHz, PCLK = 50MHz */
     CLK_PWR->MPLLCON = (92 << 12) | (1 << 4) | (1);
+
+    /* 5. Enable Peripheral Clocks in CLKCON */
+    CLK_PWR->CLKCON |= (1 << 8) | (1 << 10) | (1 << 13);
 }
 
 void hal_clock_reset(void) {

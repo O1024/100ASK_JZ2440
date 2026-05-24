@@ -1,5 +1,7 @@
-# common/arch/arch.mk - 指令集模块清单
-ARCH_DIR = $(TOP_DIR)/common/arch
+# common/arch/arch.mk - Application Architecture Sources
 
-# 启动代码
-SRCS += $(ARCH_DIR)/s3c2440_start.S
+ifeq ($(BOOT_MEDIA),nor)
+  SRCS += $(COMMON_DIR)/arch/start_nor.S
+else
+  SRCS += $(COMMON_DIR)/arch/start_nand.S
+endif
