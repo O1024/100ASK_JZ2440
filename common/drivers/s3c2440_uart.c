@@ -74,21 +74,34 @@ void hal_uart_puts(const char *str) {
     }
 }
 
-#include "hal/hal_delay.h"
+#include "hal/hal_timer.h"
 
 int hal_uart_tstc(void) {
     return (UART0->UTRSTAT & UTRSTAT_RX_READY) ? 1 : 0;
 }
 
 int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
-    uint32_t elapsed_10us = 0;
-    uint32_t timeout_10us = timeout_ms * 100;
+    /* 
+     * Hardware Timer Timeout Implementation
+     * Timer 4 ticks at 31250 Hz (31.25 ticks per ms).
+     */
+    uint32_t target_ticks = timeout_ms * 31; /* Approximate to 31 ticks/ms */
+    uint16_t start = hal_timer4_get_ticks();
+    uint32_t elapsed = 0;
     
     while (!(UART0->UTRSTAT & UTRSTAT_RX_READY)) {
-        /* At 400MHz, hal_delay(1000) is approximately 10us */
-        hal_delay(1000); 
-        elapsed_10us++;
-        if (elapsed_10us >= timeout_10us) {
+        uint16_t current = hal_timer4_get_ticks();
+        
+        /* Handle down-counter wrap-around */
+        if (current <= start) {
+            elapsed += (start - current);
+        } else {
+            elapsed += (start + (0xFFFF - current));
+        }
+        
+        start = current;
+        
+        if (elapsed >= target_ticks) {
             return -1; /* Timeout */
         }
     }

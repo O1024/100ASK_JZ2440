@@ -42,7 +42,12 @@ static void bsp_init(void) {
     hal_nand_init();
     hal_gpio_init_output(BOOT_LED);
     hal_gpio_set(BOOT_LED, GPIO_LOW); 
-    hal_timer4_init(500);
+    
+    /* Initialize Timer 4 as a hardware timebase for UART timeouts */
+    hal_timer4_init_freerun();
+    /* Manually start Timer 4 (Bit 20) without triggering hal_irq_enable */
+    volatile uint32_t *tcon = (volatile uint32_t *)0x51000008;
+    *tcon |= (1 << 20);
 }
 
 /**

@@ -42,3 +42,25 @@ void hal_timer4_stop(void) {
 void hal_timer4_set_handler(void (*handler)(void)) {
     hal_irq_register(IRQ_TIMER4, handler);
 }
+
+void hal_timer4_init_freerun(void) {
+    /* 1. Frequency setup: PCLK (50MHz) / 100 / 16 = 31250 Hz */
+    TIMER->TCFG0 &= ~(0xFF << 8);
+    TIMER->TCFG0 |= (99 << 8);
+    TIMER->TCFG1 &= ~(0xF << 16);
+    TIMER->TCFG1 |= (0x3 << 16);
+
+    /* 2. Set count to maximum (16-bit) */
+    TIMER->TCNTB4 = 0xFFFF;
+
+    /* 3. Manual Update sequence */
+    TIMER->TCON |= (1 << 21);
+    TIMER->TCON &= ~(1 << 21);
+    
+    /* 4. Auto Reload setup (No Interrupts enabled in TINT_CSTAT) */
+    TIMER->TCON |= (1 << 22);
+}
+
+uint16_t hal_timer4_get_ticks(void) {
+    return (uint16_t)TIMER->TCNTO4;
+}
