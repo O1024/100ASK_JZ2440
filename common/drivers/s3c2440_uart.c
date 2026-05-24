@@ -104,3 +104,8 @@ void hal_uart_flush(void) {
         (void)dummy;
     }
 }
+
+void hal_uart_wait_tx_done(void) {
+    /* Wait until both FIFO and transmitter shifter are empty */
+    while (!(UART0->UTRSTAT & UTRSTAT_TX_EMPTY));
+}

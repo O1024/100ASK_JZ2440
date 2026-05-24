@@ -19,12 +19,13 @@
 #define PACKET_SIZE             128
 #define PACKET_1K_SIZE          1024
 
-static int receive_packet(uint8_t *data, int *length, uint8_t *seq, uint32_t timeout) {
+/* Global buffer to prevent stack overflow on 1KB IRQ/SVC stacks */
+static uint8_t rx_packet_buf[PACKET_1K_SIZE + PACKET_OVERHEAD];
+
+static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
     uint16_t crc;
-    uint8_t packet_size[PACKET_1K_SIZE + PACKET_OVERHEAD];
     char c;
     
-    *length = 0;
     if (hal_uart_getc_timeout(timeout, &c) != 0) return -1;
     
     switch (c) {
@@ -35,34 +36,29 @@ static int receive_packet(uint8_t *data, int *length, uint8_t *seq, uint32_t tim
         default: return -1;
     }
     
-    packet_size[0] = (uint8_t)c;
+    rx_packet_buf[0] = (uint8_t)c;
     for (int i = 1; i < (*length + PACKET_OVERHEAD); i++) {
-        if (hal_uart_getc_timeout(1000, &c) != 0) return -1;
-        packet_size[i] = (uint8_t)c;
+        if (hal_uart_getc_timeout(2000, &c) != 0) return -1;
+        rx_packet_buf[i] = (uint8_t)c;
     }
     
-    if (packet_size[PACKET_SEQNO_INDEX] != ((packet_size[PACKET_SEQNO_COMP_INDEX] ^ 0xFF) & 0xFF)) {
+    if (rx_packet_buf[PACKET_SEQNO_INDEX] != ((rx_packet_buf[PACKET_SEQNO_COMP_INDEX] ^ 0xFF) & 0xFF)) {
         return -1;
     }
     
-    *seq = packet_size[PACKET_SEQNO_INDEX];
+    *seq = rx_packet_buf[PACKET_SEQNO_INDEX];
     
-    crc = (uint16_t)(packet_size[*length + PACKET_HEADER] << 8);
-    crc += packet_size[*length + PACKET_HEADER + 1];
+    crc = (uint16_t)(rx_packet_buf[*length + PACKET_HEADER] << 8);
+    crc += rx_packet_buf[*length + PACKET_HEADER + 1];
     
-    if (crc16(&packet_size[PACKET_HEADER], *length) != crc) {
+    if (crc16(&rx_packet_buf[PACKET_HEADER], *length) != crc) {
         return -1;
-    }
-    
-    for (int i = 0; i < *length; i++) {
-        data[i] = packet_size[PACKET_HEADER + i];
     }
     
     return 0;
 }
 
 int ymodem_receive(ymodem_write_cb write_cb) {
-    uint8_t packet_data[PACKET_1K_SIZE];
     int session_done = 0;
     int errors = 0;
     int status;
@@ -78,7 +74,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
             send_c = 0;
         }
         
-        status = receive_packet(packet_data, &length, &seq, 3000);
+        status = receive_packet(&length, &seq, 5000);
         
         if (status == 0) {
             errors = 0;
@@ -86,7 +82,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
             if (seq == expected_seq) {
                 if (seq == 0) {
                     /* Packet 0: Metadata */
-                    if (packet_data[0] == 0) {
+                    if (rx_packet_buf[PACKET_HEADER] == 0) {
                         hal_uart_putc(ACK);
                         session_done = 1;
                         break;
@@ -98,7 +94,8 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                 } else {
                     /* Data Packet */
                     if (write_cb) {
-                        if (write_cb(flash_offset, packet_data, length) != 0) {
+                        /* Pass the pointer to the payload directly */
+                        if (write_cb(flash_offset, &rx_packet_buf[PACKET_HEADER], length) != 0) {
                             hal_uart_putc(CAN);
                             hal_uart_putc(CAN);
                             return YMODEM_ERROR;
@@ -112,7 +109,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                 /* Duplicate packet (our ACK was lost). Just ACK again. */
                 hal_uart_putc(ACK);
             } else {
-                /* Sequence mismatch */
+                /* Sequence error */
                 hal_uart_putc(CAN);
                 hal_uart_putc(CAN);
                 return YMODEM_ERROR;
@@ -120,7 +117,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
             
         } else if (status == 1) { /* EOT */
             hal_uart_putc(NAK); 
-            status = receive_packet(packet_data, &length, &seq, 3000);
+            status = receive_packet(&length, &seq, 3000);
             if (status == 1) {
                 hal_uart_putc(ACK); 
                 send_c = 1;         
@@ -133,9 +130,14 @@ int ymodem_receive(ymodem_write_cb write_cb) {
         } else if (status == 2) { /* CAN */
             return YMODEM_ABORT;
         } else {
-            hal_uart_putc(NAK);
             errors++;
             if (errors >= 10) return YMODEM_ERROR;
+            
+            if (expected_seq == 0) {
+                send_c = 1;
+            } else {
+                hal_uart_putc(NAK);
+            }
         }
     }
     return YMODEM_OK;

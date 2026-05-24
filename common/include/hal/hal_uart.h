@@ -42,4 +42,9 @@ int hal_uart_getc_timeout(uint32_t timeout_ms, char *c);
  */
 void hal_uart_flush(void);
 
+/**
+ * @brief Wait until all transmitted data has physically left the UART
+ */
+void hal_uart_wait_tx_done(void);
+
 #endif // __HAL_UART_H__
