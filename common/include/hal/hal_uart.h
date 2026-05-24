@@ -23,4 +23,18 @@ char hal_uart_getc(void);
  */
 void hal_uart_puts(const char *str);
 
+/**
+ * @brief Check if a character is available in the RX buffer
+ * @return 1 if available, 0 if empty
+ */
+int hal_uart_tstc(void);
+
+/**
+ * @brief Receive a character with timeout
+ * @param timeout_ms Timeout in milliseconds
+ * @param c Pointer to store the received character
+ * @return 0 on success, -1 on timeout
+ */
+int hal_uart_getc_timeout(uint32_t timeout_ms, char *c);
+
 #endif // __HAL_UART_H__

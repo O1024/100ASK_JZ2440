@@ -25,8 +25,15 @@ reset_handler:
     mov r1, #0
     str r1, [r0]
 
-    /* 3. Initial Stack (SRAM top @ 0x40001000) */
-    ldr sp, =0x40001000
+    /* 3. Setup Stacks in Internal SRAM (4KB at 0x40000000) */
+    
+    /* Enter IRQ mode, disable IRQ/FIQ */
+    msr cpsr_c, #0xd2
+    ldr sp, =0x40001000    /* Top 1KB for IRQ stack */
+
+    /* Enter SVC mode, disable IRQ/FIQ */
+    msr cpsr_c, #0xd3
+    ldr sp, =0x40000c00    /* 3KB for SVC stack */
 
     /* 4. Clear BSS */
     ldr r0, =__bss_start

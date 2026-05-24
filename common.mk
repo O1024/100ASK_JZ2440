@@ -31,16 +31,19 @@ else
     CFLAGS    += -DTARGET_ISRAM
 endif
 
-# --- Sources ---
-SRCS += $(ARCH_DIR)/start.S $(COMMON_DIR)/boot/relocate.c
-include $(DRIVERS_DIR)/drivers.mk
-SRCS += main.c
+# Allow application to override entire SRCS list
+ifeq ($(SRCS),)
+    SRCS += $(ARCH_DIR)/start.S $(COMMON_DIR)/boot/relocate.c
+    include $(DRIVERS_DIR)/drivers.mk
+    include $(COMMON_DIR)/lib/lib.mk
+    SRCS += main.c
+endif
 
 OBJS := $(addsuffix .o, $(basename $(SRCS)))
 DEPS := $(OBJS:.o=.d)
 
 # --- Compiler Flags ---
-INCLUDES := -I$(INCLUDE_DIR)
+INCLUDES := -I$(INCLUDE_DIR) -I$(COMMON_DIR)/include
 CFLAGS   += $(INCLUDES) -O2 -Wall -march=armv4t -marm \
             -fno-stack-protector -ffunction-sections -fdata-sections \
             -fno-builtin -MMD -MP \
@@ -48,8 +51,11 @@ CFLAGS   += $(INCLUDES) -O2 -Wall -march=armv4t -marm \
             -DDATA_BASE=$(RAM_ADDR) \
             -DSTACK_TOP=$(STACK_TOP)
 
-LDFLAGS  := -nostartfiles -Wl,--gc-sections -L $(LDS_DIR) -T $(LDS_DIR)/jz2440.lds \
-            -Wl,--defsym=_ROM_START=$(ROM_ADDR) -Wl,--defsym=_RAM_START=$(RAM_ADDR)
+# Allow application to override LDFLAGS (e.g. for custom LDS)
+ifeq ($(LDFLAGS),)
+    LDFLAGS  := -nostartfiles -Wl,--gc-sections -L $(LDS_DIR) -T $(LDS_DIR)/jz2440.lds \
+                -Wl,--defsym=_ROM_START=$(ROM_ADDR) -Wl,--defsym=_RAM_START=$(RAM_ADDR)
+endif
 
 .PHONY: all clean flash flash_nor flash_nand openocd gdb
 
@@ -73,7 +79,7 @@ $(TARGET).bin: $(TARGET).elf
 	$(Q)$(OBJCOPY) -O binary -S $< $@
 
 $(TARGET).elf: $(OBJS)
-	@echo "  LD      $@ (using $(LDS_DIR)/jz2440.lds)"
+	@echo "  LD      $@ (using $(patsubst -T%,%,$(filter -T%,$(LDFLAGS))))"
 	@if [ "$(V)" = "1" ]; then echo "  LDFLAGS: $(LDFLAGS)"; fi
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 

@@ -73,3 +73,26 @@ void hal_uart_puts(const char *str) {
         hal_uart_putc(*str++);
     }
 }
+
+#include "hal/hal_delay.h"
+
+int hal_uart_tstc(void) {
+    return (UART0->UTRSTAT & UTRSTAT_RX_READY) ? 1 : 0;
+}
+
+int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
+    /* Rough timeout implementation using hal_delay */
+    /* hal_delay(1000) is approx 1ms depending on clock */
+    uint32_t elapsed = 0;
+    
+    while (!(UART0->UTRSTAT & UTRSTAT_RX_READY)) {
+        hal_delay(1000); /* wait ~1ms */
+        elapsed++;
+        if (elapsed >= timeout_ms) {
+            return -1; /* Timeout */
+        }
+    }
+    
+    *c = (char)UART0->URXH;
+    return 0;
+}

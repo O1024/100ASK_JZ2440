@@ -15,16 +15,30 @@ SECTIONS
         *(.text*)
     }
 
-    .rodata : { *(.rodata*) }
-    .data : { *(.data*) }
+    .rodata : { 
+        . = ALIGN(4);
+        *(.rodata*) 
+    }
+
+    . = ALIGN(4);
+    __data_flash_start = .;
+
+    /* Data and BSS go to RAM (e.g. 0x40000000) */
+    .data 0x40000000 : AT(__data_flash_start) {
+        __data_start = .;
+        *(.data*)
+        . = ALIGN(4);
+        __data_end = .;
+    }
 
     .bss : {
         __bss_start = .;
         *(.bss*)
         *(COMMON)
+        . = ALIGN(4);
         __bss_end = .;
     }
 
-    /* Keep it 4KB to match the NAND application offset */
-    ASSERT(. <= 4096, "Error: NOR Bootloader exceeded 4KB limit!")
+    /* Keep it 16KB limit in Flash */
+    ASSERT(__data_flash_start <= 16384, "Error: NOR Bootloader exceeded 16KB limit!")
 }
