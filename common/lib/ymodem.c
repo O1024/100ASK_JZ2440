@@ -22,18 +22,28 @@
 /* Global buffer to prevent stack overflow on 1KB IRQ/SVC stacks */
 static uint8_t rx_packet_buf[PACKET_1K_SIZE + PACKET_OVERHEAD];
 
+/* Diagnostic variables */
+static uint8_t last_err_char = 0;
+static int last_err_type = 0; /* 1: Timeout, 2: Bad Header */
+
 static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
     uint16_t crc;
     char c;
     
-    if (hal_uart_getc_timeout(timeout, &c) != 0) return -1;
+    if (hal_uart_getc_timeout(timeout, &c) != 0) {
+        last_err_type = 1; /* Timeout */
+        return -1;
+    }
     
     switch (c) {
         case SOH: *length = PACKET_SIZE; break;
         case STX: *length = PACKET_1K_SIZE; break;
         case EOT: return 1;
         case CAN: return 2;
-        default: return -1;
+        default: 
+            last_err_type = 2; /* Bad Header */
+            last_err_char = (uint8_t)c;
+            return -1;
     }
     
     rx_packet_buf[0] = (uint8_t)c;
@@ -94,7 +104,6 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                 } else {
                     /* Data Packet */
                     if (write_cb) {
-                        /* Pass the pointer to the payload directly */
                         if (write_cb(flash_offset, &rx_packet_buf[PACKET_HEADER], length) != 0) {
                             hal_uart_putc(CAN);
                             hal_uart_putc(CAN);
@@ -106,10 +115,8 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                     expected_seq++;
                 }
             } else if (seq == (uint8_t)(expected_seq - 1)) {
-                /* Duplicate packet (our ACK was lost). Just ACK again. */
                 hal_uart_putc(ACK);
             } else {
-                /* Sequence error */
                 hal_uart_putc(CAN);
                 hal_uart_putc(CAN);
                 return YMODEM_ERROR;
@@ -131,7 +138,11 @@ int ymodem_receive(ymodem_write_cb write_cb) {
             return YMODEM_ABORT;
         } else {
             errors++;
-            if (errors >= 10) return YMODEM_ERROR;
+            if (errors >= 10) {
+                hal_uart_putc(CAN);
+                hal_uart_putc(CAN);
+                return YMODEM_ERROR;
+            }
             
             if (expected_seq == 0) {
                 send_c = 1;
