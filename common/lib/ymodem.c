@@ -4,81 +4,13 @@
 
 #define SOH                     0x01
 #define STX                     0x02
-#define EOT                     0x04
-#define ACK                     0x06
-#define NAK                     0x15
-#define CAN                     0x18
-#define C                       0x43
-
-#define PACKET_SEQNO_INDEX      1
-#define PACKET_SEQNO_COMP_INDEX 2
-
 #define PACKET_HEADER           3
 #define PACKET_TRAILER          2
 #define PACKET_OVERHEAD         (PACKET_HEADER + PACKET_TRAILER)
-#define PACKET_SIZE             128
 #define PACKET_1K_SIZE          1024
 
-/* Global buffer to prevent stack overflow on 1KB IRQ/SVC stacks */
+extern uint8_t boot_data_buf[];
 static uint8_t rx_packet_buf[PACKET_1K_SIZE + PACKET_OVERHEAD];
-
-/* Diagnostic variables */
-#define TRACE_LEN 16
-static int trace_idx = 0;
-static uint16_t trace_log[TRACE_LEN]; /* store either char value or 0x100 for timeout */
-
-static void add_trace(uint16_t val) {
-    if (trace_idx < TRACE_LEN) {
-        trace_log[trace_idx++] = val;
-    }
-}
-
-static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
-    uint16_t crc;
-    char c;
-    
-    if (hal_uart_getc_timeout(timeout, &c) != 0) {
-        add_trace(0x100); /* Mark header timeout */
-        return -1;
-    }
-    add_trace((uint8_t)c);
-    
-    switch (c) {
-        case SOH: *length = PACKET_SIZE; break;
-        case STX: *length = PACKET_1K_SIZE; break;
-        case EOT: return 1;
-        case CAN: return 2;
-        default: 
-            add_trace(0x200); /* Mark bad header */
-            return -1;
-    }
-    
-    rx_packet_buf[0] = (uint8_t)c;
-    for (int i = 1; i < (*length + PACKET_OVERHEAD); i++) {
-        if (hal_uart_getc_timeout(2000, &c) != 0) {
-            add_trace(0x300); /* Mark payload timeout */
-            return -1;
-        }
-        rx_packet_buf[i] = (uint8_t)c;
-    }
-    
-    if (rx_packet_buf[PACKET_SEQNO_INDEX] != ((rx_packet_buf[PACKET_SEQNO_COMP_INDEX] ^ 0xFF) & 0xFF)) {
-        add_trace(0x400); /* Mark sequence mismatch */
-        return -1;
-    }
-    
-    *seq = rx_packet_buf[PACKET_SEQNO_INDEX];
-    
-    crc = (uint16_t)(rx_packet_buf[*length + PACKET_HEADER] << 8);
-    crc += rx_packet_buf[*length + PACKET_HEADER + 1];
-    
-    if (crc16(&rx_packet_buf[PACKET_HEADER], *length) != crc) {
-        add_trace(0x500); /* Mark CRC mismatch */
-        return -1;
-    }
-    
-    return 0;
-}
 
 static void print_hex8(uint8_t val) {
     const char hex_chars[] = "0123456789ABCDEF";
@@ -86,122 +18,71 @@ static void print_hex8(uint8_t val) {
     hal_uart_putc(hex_chars[val & 0xF]);
 }
 
-static void print_trace(void) {
-    hal_uart_puts("\r\n[Diag] YModem Trace: ");
-    for (int i = 0; i < trace_idx; i++) {
-        if (trace_log[i] == 0x100) hal_uart_puts("T/O_HDR ");
-        else if (trace_log[i] == 0x200) hal_uart_puts("BAD_HDR ");
-        else if (trace_log[i] == 0x300) hal_uart_puts("T/O_PAYLOAD ");
-        else if (trace_log[i] == 0x400) hal_uart_puts("SEQ_ERR ");
-        else if (trace_log[i] == 0x500) hal_uart_puts("CRC_ERR ");
-        else {
-            print_hex8(trace_log[i] & 0xFF);
-            hal_uart_puts(" ");
+int ymodem_receive(ymodem_write_cb write_cb) {
+    char c;
+    int expected_len = 0;
+    int received_len = 0;
+    
+    hal_uart_puts("\r\n[Diag] Sniffer Mode Active. Waiting for SOH/STX...\r\n");
+    
+    while (1) {
+        hal_uart_putc(0x43); /* 'C' */
+        
+        if (hal_uart_getc_timeout(1000, &c) == 0) {
+            if (c == SOH) {
+                expected_len = 128 + PACKET_OVERHEAD;
+                rx_packet_buf[0] = (uint8_t)c;
+                received_len = 1;
+                break;
+            } else if (c == STX) {
+                expected_len = PACKET_1K_SIZE + PACKET_OVERHEAD;
+                rx_packet_buf[0] = (uint8_t)c;
+                received_len = 1;
+                break;
+            }
         }
+    }
+    
+    hal_uart_puts("\r\n[Diag] Header received! Slurping payload...\r\n");
+    
+    for (int i = 1; i < expected_len; i++) {
+        if (hal_uart_getc_timeout(2000, &c) != 0) {
+            hal_uart_puts("\r\n[Diag] FATAL: Timeout during payload slurp!\r\n");
+            break;
+        }
+        rx_packet_buf[i] = (uint8_t)c;
+        received_len++;
+    }
+    
+    hal_uart_puts("\r\n[Diag] Slurp complete. Expected: ");
+    print_hex8((expected_len >> 8) & 0xFF); print_hex8(expected_len & 0xFF);
+    hal_uart_puts(", Received: ");
+    print_hex8((received_len >> 8) & 0xFF); print_hex8(received_len & 0xFF);
+    hal_uart_puts("\r\n");
+    
+    hal_uart_puts("[Diag] Packet Dump:\r\n");
+    for (int i = 0; i < received_len; i++) {
+        print_hex8(rx_packet_buf[i]);
+        hal_uart_putc(' ');
+        if ((i + 1) % 16 == 0) hal_uart_puts("\r\n");
     }
     hal_uart_puts("\r\n");
-}
-
-int ymodem_receive(ymodem_write_cb write_cb) {
-    int session_done = 0;
-    int errors = 0;
-    int status;
-    int length = 0;
-    uint8_t seq = 0;
-    uint32_t flash_offset = 0;
-    uint8_t expected_seq = 0;
     
-    trace_idx = 0; /* Reset trace */
+    if (received_len == expected_len) {
+        uint32_t payload_len = expected_len - PACKET_OVERHEAD;
+        uint16_t calc_crc = crc16(&rx_packet_buf[PACKET_HEADER], payload_len);
+        uint16_t rx_crc = (rx_packet_buf[expected_len - 2] << 8) | rx_packet_buf[expected_len - 1];
+        
+        hal_uart_puts("[Diag] CRC Calc: ");
+        print_hex8((calc_crc >> 8) & 0xFF); print_hex8(calc_crc & 0xFF);
+        hal_uart_puts(", RX CRC: ");
+        print_hex8((rx_crc >> 8) & 0xFF); print_hex8(rx_crc & 0xFF);
+        hal_uart_puts("\r\n");
+    }
     
-    /* 1. Initial Handshake: Patiently send 'C' until we get a valid packet */
-    while (1) {
-        hal_uart_putc(C);
-        status = receive_packet(&length, &seq, 1000); /* 1 second timeout for 'C' polling */
-        if (status == 0) {
-            /* We got a valid packet! Break out of handshake loop and process it. */
-            break; 
-        }
-        if (status == 2) {
-            /* User cancelled */
-            return YMODEM_ABORT;
-        }
-        /* Ignore timeouts or junk characters during handshake, just loop and send 'C' again */
-    }
-
-    /* We have our first valid packet. Process it in the main loop. */
-    while (!session_done) {
-        if (status == 0) {
-            errors = 0;
-            
-            if (seq == expected_seq) {
-                if (seq == 0) {
-                    /* Packet 0: Metadata */
-                    if (rx_packet_buf[PACKET_HEADER] == 0) {
-                        hal_uart_putc(ACK);
-                        session_done = 1;
-                        break;
-                    }
-                    hal_uart_putc(ACK);
-                    hal_uart_putc(C); /* Request data packets */
-                    expected_seq = 1;
-                    flash_offset = 0;
-                } else {
-                    /* Data Packet */
-                    if (write_cb) {
-                        if (write_cb(flash_offset, &rx_packet_buf[PACKET_HEADER], length) != 0) {
-                            hal_uart_putc(CAN);
-                            hal_uart_putc(CAN);
-                            return YMODEM_ERROR;
-                        }
-                    }
-                    flash_offset += length;
-                    hal_uart_putc(ACK);
-                    expected_seq++;
-                }
-            } else if (seq == (uint8_t)(expected_seq - 1)) {
-                /* Duplicate packet (our ACK was lost). Just ACK again. */
-                hal_uart_putc(ACK);
-            } else {
-                /* Sequence error */
-                hal_uart_putc(CAN);
-                hal_uart_putc(CAN);
-                return YMODEM_ERROR;
-            }
-            
-        } else if (status == 1) { /* EOT */
-            hal_uart_putc(NAK); 
-            status = receive_packet(&length, &seq, 3000);
-            if (status == 1) {
-                hal_uart_putc(ACK); 
-                hal_uart_putc(C);   /* Request next file or end session */      
-                expected_seq = 0;   
-            } else {
-                hal_uart_putc(CAN);
-                hal_uart_putc(CAN);
-                return YMODEM_ERROR;
-            }
-        } else if (status == 2) { /* CAN */
-            print_trace();
-            return YMODEM_ABORT;
-        } else {
-            errors++;
-
-            if (errors >= 10) {
-                print_trace();
-                hal_uart_putc(CAN);
-                hal_uart_putc(CAN);
-                return YMODEM_ERROR;
-            }
-
-            if (expected_seq == 0) {
-                hal_uart_putc(C);
-            } else {
-                hal_uart_putc(NAK);
-            }
-        }
-
-        /* Get next packet for the loop */
-        status = receive_packet(&length, &seq, 3000);
-    }
-    return YMODEM_OK;
+    hal_uart_puts("[Diag] Sniffing finished. Aborting session.\r\n");
+    hal_uart_putc(0x18); /* CAN */
+    hal_uart_putc(0x18);
+    
+    return YMODEM_ABORT;
 }
