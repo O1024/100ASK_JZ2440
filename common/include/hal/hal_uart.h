@@ -30,11 +30,16 @@ void hal_uart_puts(const char *str);
 int hal_uart_tstc(void);
 
 /**
- * @brief Receive a character with timeout
+ * @brief Send a character with timeout
  * @param timeout_ms Timeout in milliseconds
  * @param c Pointer to store the received character
  * @return 0 on success, -1 on timeout
  */
 int hal_uart_getc_timeout(uint32_t timeout_ms, char *c);
+
+/**
+ * @brief Flush (clear) the UART receive buffer
+ */
+void hal_uart_flush(void);
 
 #endif // __HAL_UART_H__

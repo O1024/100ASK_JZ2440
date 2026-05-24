@@ -82,11 +82,11 @@ int hal_uart_tstc(void) {
 
 int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
     /* Rough timeout implementation using hal_delay */
-    /* hal_delay(1000) is approx 1ms depending on clock */
+    /* At 400MHz, hal_delay(100000) is approximately 1ms */
     uint32_t elapsed = 0;
     
     while (!(UART0->UTRSTAT & UTRSTAT_RX_READY)) {
-        hal_delay(1000); /* wait ~1ms */
+        hal_delay(100000); 
         elapsed++;
         if (elapsed >= timeout_ms) {
             return -1; /* Timeout */
@@ -95,4 +95,12 @@ int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
     
     *c = (char)UART0->URXH;
     return 0;
+}
+
+void hal_uart_flush(void) {
+    /* Read URXH until UTRSTAT_RX_READY is clear */
+    while (UART0->UTRSTAT & UTRSTAT_RX_READY) {
+        volatile char dummy = (char)UART0->URXH;
+        (void)dummy;
+    }
 }

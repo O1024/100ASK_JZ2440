@@ -17,25 +17,25 @@ SECTIONS {
     }
 
     . = ALIGN(4);
-    _data_flash_start = .; 
+    __data_flash_start = .; 
     
     . = _RAM_START;
 
     /* Data segment: LMA is Flash, VMA is RAM (e.g., 0x40000000) */
-    .data . : AT(_data_flash_start) {
-        _data_start = .;
+    .data . : AT(__data_flash_start) {
+        __data_start = .;
         *(.data .data.*)
         . = ALIGN(4);
-        _data_end = .;
+        __data_end = .;
     }
 
     /* BSS segment: In RAM, follows .data */
     .bss . : {
-        _bss_start = .;
+        __bss_start = .;
         *(.bss .bss.*)
         *(COMMON)
         . = ALIGN(4);
-        _bss_end = .;
+        __bss_end = .;
     }
 
     /DISCARD/ : { *(.comment) *(.note*) *(.ARM.attributes) }

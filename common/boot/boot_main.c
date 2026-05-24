@@ -84,6 +84,10 @@ static int nand_write_cb(uint32_t offset, const uint8_t *data, uint32_t length) 
  */
 static void do_update(void) {
     hal_uart_puts("\r\n[Boot] Enter YModem Update Mode. Please send file...\r\n");
+    
+    /* Flush any leftover characters (like the 'u' or \r\n from the user) */
+    hal_uart_flush();
+    
     if (ymodem_receive(nand_write_cb) == YMODEM_OK) {
         hal_uart_puts("\r\n[Boot] Update successful!\r\n");
     } else {
