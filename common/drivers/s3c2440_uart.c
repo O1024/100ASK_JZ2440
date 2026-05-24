@@ -1,19 +1,26 @@
 /**
  * @file s3c2440_uart.c
- * @brief Professional S3C2440 UART Driver Implementation
+ * @brief Professional S3C2440 UART Driver Implementation (FIFO Enabled)
  */
 
 #include "hal/hal_uart.h"
 #include "hal/hal_clock.h"
+#include "hal/hal_timer.h"
 #include "s3c2440_soc.h"
 
 /* --- UART Register Bit Definitions --- */
 #define UTRSTAT_TX_EMPTY    (1 << 2)
 #define UTRSTAT_RX_READY    (1 << 0)
+#define UFCON_FIFO_ENABLE   (1 << 0)
+#define UFCON_TX_RESET      (1 << 2)
+#define UFCON_RX_RESET      (1 << 1)
+
+#define UFSTAT_TX_FULL      (1 << 14)
+#define UFSTAT_RX_FULL      (1 << 6)
+#define UFSTAT_RX_COUNT     (0x3F)
 
 /**
- * @brief Initialize UART0
- * @param baud_rate Target baud rate (e.g., 115200)
+ * @brief Initialize UART0 with 64-byte Hardware FIFO
  */
 void hal_uart_init(uint32_t baud_rate) {
     /* 1. Configure GPIO: GPH2 -> TXD0, GPH3 -> RXD0 */
@@ -29,8 +36,11 @@ void hal_uart_init(uint32_t baud_rate) {
 
     /* 3. Control: Polling Mode, Disable Interrupts, No DMA */
     UART0->UCON = 0x05; 
+    
+    /* 4. Enable FIFO and reset it */
+    UART0->UFCON = UFCON_FIFO_ENABLE | UFCON_TX_RESET | UFCON_RX_RESET;
 
-    /* 4. Baud Rate Calculation:
+    /* 5. Baud Rate Calculation:
      * UBRDIVn = (int)(PCLK / (baud * 16)) - 1
      */
     uint32_t pclk = hal_clock_get_pclk();
@@ -41,8 +51,8 @@ void hal_uart_init(uint32_t baud_rate) {
  * @brief Send a single character (Blocking)
  */
 void hal_uart_putc(char c) {
-    /* Wait until Transmit buffer is empty */
-    while (!(UART0->UTRSTAT & UTRSTAT_TX_EMPTY));
+    /* Wait until TX FIFO is not full */
+    while (UART0->UFSTAT & UFSTAT_TX_FULL);
     
     /* Write data to transmit register */
     UART0->UTXH = (uint8_t)c;
@@ -52,8 +62,8 @@ void hal_uart_putc(char c) {
  * @brief Receive a single character (Blocking)
  */
 char hal_uart_getc(void) {
-    /* Wait until Receive buffer has data */
-    while (!(UART0->UTRSTAT & UTRSTAT_RX_READY));
+    /* Wait until RX FIFO has data */
+    while ((UART0->UFSTAT & UFSTAT_RX_COUNT) == 0);
     
     /* Read data from receive register */
     return (char)UART0->URXH;
@@ -66,7 +76,6 @@ void hal_uart_puts(const char *str) {
     if (!str) return;
     
     while (*str) {
-        /* Standardize line endings to \r\n */
         if (*str == '\n') {
             hal_uart_putc('\r');
         }
@@ -74,25 +83,19 @@ void hal_uart_puts(const char *str) {
     }
 }
 
-#include "hal/hal_timer.h"
-
 int hal_uart_tstc(void) {
-    return (UART0->UTRSTAT & UTRSTAT_RX_READY) ? 1 : 0;
+    return (UART0->UFSTAT & UFSTAT_RX_COUNT) ? 1 : 0;
 }
 
 int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
-    /* 
-     * Hardware Timer Timeout Implementation
-     * Timer 4 ticks at 31250 Hz (31.25 ticks per ms).
-     */
     uint32_t target_ticks = timeout_ms * 31; /* Approximate to 31 ticks/ms */
     uint16_t start = hal_timer4_get_ticks();
     uint32_t elapsed = 0;
     
-    while (!(UART0->UTRSTAT & UTRSTAT_RX_READY)) {
+    /* Wait until RX FIFO has data */
+    while ((UART0->UFSTAT & UFSTAT_RX_COUNT) == 0) {
         uint16_t current = hal_timer4_get_ticks();
         
-        /* Handle down-counter wrap-around */
         if (current <= start) {
             elapsed += (start - current);
         } else {
@@ -111,14 +114,12 @@ int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
 }
 
 void hal_uart_flush(void) {
-    /* Read URXH until UTRSTAT_RX_READY is clear */
-    while (UART0->UTRSTAT & UTRSTAT_RX_READY) {
-        volatile char dummy = (char)UART0->URXH;
-        (void)dummy;
-    }
+    /* Reset RX FIFO directly */
+    UART0->UFCON |= UFCON_RX_RESET;
 }
 
 void hal_uart_wait_tx_done(void) {
-    /* Wait until both FIFO and transmitter shifter are empty */
+    /* Wait until TX FIFO count is 0 and shifter is empty */
+    /* UTRSTAT_TX_EMPTY means BOTH FIFO and shifter are empty if FIFO is enabled */
     while (!(UART0->UTRSTAT & UTRSTAT_TX_EMPTY));
 }
