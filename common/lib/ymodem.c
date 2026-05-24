@@ -38,7 +38,7 @@ static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
     char c;
     
     if (hal_uart_getc_timeout(timeout, &c) != 0) {
-        add_trace(0x100); /* Mark timeout */
+        add_trace(0x100); /* Mark header timeout */
         return -1;
     }
     add_trace((uint8_t)c);
@@ -48,16 +48,22 @@ static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
         case STX: *length = PACKET_1K_SIZE; break;
         case EOT: return 1;
         case CAN: return 2;
-        default: return -1;
+        default: 
+            add_trace(0x200); /* Mark bad header */
+            return -1;
     }
     
     rx_packet_buf[0] = (uint8_t)c;
     for (int i = 1; i < (*length + PACKET_OVERHEAD); i++) {
-        if (hal_uart_getc_timeout(2000, &c) != 0) return -1;
+        if (hal_uart_getc_timeout(2000, &c) != 0) {
+            add_trace(0x300); /* Mark payload timeout */
+            return -1;
+        }
         rx_packet_buf[i] = (uint8_t)c;
     }
     
     if (rx_packet_buf[PACKET_SEQNO_INDEX] != ((rx_packet_buf[PACKET_SEQNO_COMP_INDEX] ^ 0xFF) & 0xFF)) {
+        add_trace(0x400); /* Mark sequence mismatch */
         return -1;
     }
     
@@ -67,6 +73,7 @@ static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
     crc += rx_packet_buf[*length + PACKET_HEADER + 1];
     
     if (crc16(&rx_packet_buf[PACKET_HEADER], *length) != crc) {
+        add_trace(0x500); /* Mark CRC mismatch */
         return -1;
     }
     
@@ -82,9 +89,12 @@ static void print_hex8(uint8_t val) {
 static void print_trace(void) {
     hal_uart_puts("\r\n[Diag] YModem Trace: ");
     for (int i = 0; i < trace_idx; i++) {
-        if (trace_log[i] == 0x100) {
-            hal_uart_puts("T/O ");
-        } else {
+        if (trace_log[i] == 0x100) hal_uart_puts("T/O_HDR ");
+        else if (trace_log[i] == 0x200) hal_uart_puts("BAD_HDR ");
+        else if (trace_log[i] == 0x300) hal_uart_puts("T/O_PAYLOAD ");
+        else if (trace_log[i] == 0x400) hal_uart_puts("SEQ_ERR ");
+        else if (trace_log[i] == 0x500) hal_uart_puts("CRC_ERR ");
+        else {
             print_hex8(trace_log[i] & 0xFF);
             hal_uart_puts(" ");
         }
@@ -171,21 +181,25 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                 return YMODEM_ERROR;
             }
         } else if (status == 2) { /* CAN */
+            print_trace();
             return YMODEM_ABORT;
         } else {
             errors++;
-            
+
             if (errors >= 10) {
                 print_trace();
                 hal_uart_putc(CAN);
                 hal_uart_putc(CAN);
                 return YMODEM_ERROR;
             }
-            
-            /* Data phase NAK */
-            hal_uart_putc(NAK);
+
+            if (expected_seq == 0) {
+                hal_uart_putc(C);
+            } else {
+                hal_uart_putc(NAK);
+            }
         }
-        
+
         /* Get next packet for the loop */
         status = receive_packet(&length, &seq, 3000);
     }
