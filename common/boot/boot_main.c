@@ -125,14 +125,20 @@ static void do_update(void) {
     if (ymodem_receive(nand_write_cb) == YMODEM_OK) {
         flush_nand_buf(); /* Write the final partial page */
         hal_uart_puts("\r\n[Boot] Update successful!\r\n");
+        hal_uart_puts("[Boot] System halted. Please RESET to boot new firmware.\r\n");
+        while(1);
     } else {
-        /* Wait 1.5 seconds to let Minicom 'sb' process exit back to terminal */
-        hal_delay(1500000); 
+        /* Wait 2 seconds to ensure Minicom 'sb' process has completely exited */
+        hal_delay(2000000); 
         hal_uart_puts("\r\n[Boot] Update failed or aborted.\r\n");
-        ymodem_print_trace();
+        hal_uart_puts("[Boot] Press 'd' to dump diagnostic trace, or RESET to reboot.\r\n");
+        while(1) {
+            char c = hal_uart_getc();
+            if (c == 'd' || c == 'D') {
+                ymodem_print_trace();
+            }
+        }
     }
-    hal_uart_puts("[Boot] System halted. Please RESET to boot new firmware.\r\n");
-    while(1);
 }
 
 /**
