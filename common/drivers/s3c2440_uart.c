@@ -81,14 +81,14 @@ int hal_uart_tstc(void) {
 }
 
 int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
-    /* Rough timeout implementation using hal_delay */
-    /* At 400MHz, hal_delay(100000) is approximately 1ms */
-    uint32_t elapsed = 0;
+    uint32_t elapsed_10us = 0;
+    uint32_t timeout_10us = timeout_ms * 100;
     
     while (!(UART0->UTRSTAT & UTRSTAT_RX_READY)) {
-        hal_delay(100000); 
-        elapsed++;
-        if (elapsed >= timeout_ms) {
+        /* At 400MHz, hal_delay(1000) is approximately 10us */
+        hal_delay(1000); 
+        elapsed_10us++;
+        if (elapsed_10us >= timeout_10us) {
             return -1; /* Timeout */
         }
     }
