@@ -23,27 +23,32 @@
 static uint8_t rx_packet_buf[PACKET_1K_SIZE + PACKET_OVERHEAD];
 
 /* Diagnostic variables */
-static uint8_t last_err_char = 0;
-static int last_err_type = 0; /* 1: Timeout, 2: Bad Header */
+#define TRACE_LEN 16
+static int trace_idx = 0;
+static uint16_t trace_log[TRACE_LEN]; /* store either char value or 0x100 for timeout */
+
+static void add_trace(uint16_t val) {
+    if (trace_idx < TRACE_LEN) {
+        trace_log[trace_idx++] = val;
+    }
+}
 
 static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
     uint16_t crc;
     char c;
     
     if (hal_uart_getc_timeout(timeout, &c) != 0) {
-        last_err_type = 1; /* Timeout */
+        add_trace(0x100); /* Mark timeout */
         return -1;
     }
+    add_trace((uint8_t)c);
     
     switch (c) {
         case SOH: *length = PACKET_SIZE; break;
         case STX: *length = PACKET_1K_SIZE; break;
         case EOT: return 1;
         case CAN: return 2;
-        default: 
-            last_err_type = 2; /* Bad Header */
-            last_err_char = (uint8_t)c;
-            return -1;
+        default: return -1;
     }
     
     rx_packet_buf[0] = (uint8_t)c;
@@ -68,6 +73,25 @@ static int receive_packet(int *length, uint8_t *seq, uint32_t timeout) {
     return 0;
 }
 
+static void print_hex8(uint8_t val) {
+    const char hex_chars[] = "0123456789ABCDEF";
+    hal_uart_putc(hex_chars[(val >> 4) & 0xF]);
+    hal_uart_putc(hex_chars[val & 0xF]);
+}
+
+static void print_trace(void) {
+    hal_uart_puts("\r\n[Diag] YModem Trace: ");
+    for (int i = 0; i < trace_idx; i++) {
+        if (trace_log[i] == 0x100) {
+            hal_uart_puts("T/O ");
+        } else {
+            print_hex8(trace_log[i] & 0xFF);
+            hal_uart_puts(" ");
+        }
+    }
+    hal_uart_puts("\r\n");
+}
+
 int ymodem_receive(ymodem_write_cb write_cb) {
     int session_done = 0;
     int errors = 0;
@@ -77,6 +101,8 @@ int ymodem_receive(ymodem_write_cb write_cb) {
     uint32_t flash_offset = 0;
     uint8_t expected_seq = 0;
     int send_c = 1; 
+    
+    trace_idx = 0; /* Reset trace */
     
     while (!session_done) {
         if (send_c) {
@@ -115,8 +141,10 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                     expected_seq++;
                 }
             } else if (seq == (uint8_t)(expected_seq - 1)) {
+                /* Duplicate packet (our ACK was lost). Just ACK again. */
                 hal_uart_putc(ACK);
             } else {
+                /* Sequence error */
                 hal_uart_putc(CAN);
                 hal_uart_putc(CAN);
                 return YMODEM_ERROR;
@@ -139,6 +167,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
         } else {
             errors++;
             if (errors >= 10) {
+                print_trace();
                 hal_uart_putc(CAN);
                 hal_uart_putc(CAN);
                 return YMODEM_ERROR;
