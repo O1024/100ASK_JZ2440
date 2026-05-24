@@ -110,6 +110,8 @@ static void flush_nand_buf(void) {
     }
 }
 
+extern void ymodem_print_trace(void);
+
 /**
  * @brief Enter YModem update mode
  */
@@ -124,7 +126,10 @@ static void do_update(void) {
         flush_nand_buf(); /* Write the final partial page */
         hal_uart_puts("\r\n[Boot] Update successful!\r\n");
     } else {
+        /* Wait 1.5 seconds to let Minicom 'sb' process exit back to terminal */
+        hal_delay(1500000); 
         hal_uart_puts("\r\n[Boot] Update failed or aborted.\r\n");
+        ymodem_print_trace();
     }
     hal_uart_puts("[Boot] System halted. Please RESET to boot new firmware.\r\n");
     while(1);
