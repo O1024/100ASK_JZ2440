@@ -100,18 +100,26 @@ int ymodem_receive(ymodem_write_cb write_cb) {
     uint8_t seq = 0;
     uint32_t flash_offset = 0;
     uint8_t expected_seq = 0;
-    int send_c = 1; 
     
     trace_idx = 0; /* Reset trace */
     
-    while (!session_done) {
-        if (send_c) {
-            hal_uart_putc(C);
-            send_c = 0;
+    /* 1. Initial Handshake: Patiently send 'C' until we get a valid packet */
+    while (1) {
+        hal_uart_putc(C);
+        status = receive_packet(&length, &seq, 1000); /* 1 second timeout for 'C' polling */
+        if (status == 0) {
+            /* We got a valid packet! Break out of handshake loop and process it. */
+            break; 
         }
-        
-        status = receive_packet(&length, &seq, 5000);
-        
+        if (status == 2) {
+            /* User cancelled */
+            return YMODEM_ABORT;
+        }
+        /* Ignore timeouts or junk characters during handshake, just loop and send 'C' again */
+    }
+
+    /* We have our first valid packet. Process it in the main loop. */
+    while (!session_done) {
         if (status == 0) {
             errors = 0;
             
@@ -124,7 +132,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                         break;
                     }
                     hal_uart_putc(ACK);
-                    send_c = 1; 
+                    hal_uart_putc(C); /* Request data packets */
                     expected_seq = 1;
                     flash_offset = 0;
                 } else {
@@ -155,7 +163,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
             status = receive_packet(&length, &seq, 3000);
             if (status == 1) {
                 hal_uart_putc(ACK); 
-                send_c = 1;         
+                hal_uart_putc(C);   /* Request next file or end session */      
                 expected_seq = 0;   
             } else {
                 hal_uart_putc(CAN);
@@ -166,6 +174,7 @@ int ymodem_receive(ymodem_write_cb write_cb) {
             return YMODEM_ABORT;
         } else {
             errors++;
+            
             if (errors >= 10) {
                 print_trace();
                 hal_uart_putc(CAN);
@@ -173,12 +182,12 @@ int ymodem_receive(ymodem_write_cb write_cb) {
                 return YMODEM_ERROR;
             }
             
-            if (expected_seq == 0) {
-                send_c = 1;
-            } else {
-                hal_uart_putc(NAK);
-            }
+            /* Data phase NAK */
+            hal_uart_putc(NAK);
         }
+        
+        /* Get next packet for the loop */
+        status = receive_packet(&length, &seq, 3000);
     }
     return YMODEM_OK;
 }
