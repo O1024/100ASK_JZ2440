@@ -1,5 +1,5 @@
 #!/bin/bash
-# check_spl_usage.sh - Report Bootloader size
+# check_binary_size.sh - Report binary size
 
 if [ ! -f "spl.elf" ]; then
     exit 0

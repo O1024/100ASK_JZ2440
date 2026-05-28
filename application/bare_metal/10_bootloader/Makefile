@@ -5,9 +5,8 @@ TOP_DIR   := ../../..
 
 # Explicitly define all sources for the bootloader
 # (We need the drivers because boot_main.c uses Clock, UART, NAND, etc.)
-SRCS      := $(TOP_DIR)/common/boot/nor_start.S \
-             $(TOP_DIR)/common/boot/boot_main.c \
-             $(TOP_DIR)/common/boot/relocate.c \
+SRCS      := $(TOP_DIR)/common/arch/boot_start.S \
+             $(TOP_DIR)/common/arch/relocate.c \
              $(TOP_DIR)/common/drivers/s3c2440_gpio.c \
              $(TOP_DIR)/common/drivers/s3c2440_clock.c \
              $(TOP_DIR)/common/drivers/s3c2440_uart.c \
@@ -19,11 +18,11 @@ SRCS      := $(TOP_DIR)/common/boot/nor_start.S \
              $(TOP_DIR)/common/lib/ymodem.c \
              main.c
 
-# Custom Linker Script for Bootloader
-LDFLAGS   := -nostartfiles -Wl,--gc-sections -T $(TOP_DIR)/common/boot/nor.lds
-
 # This is a Stage 1/2 loader, it runs from address 0
-ROM_ADDR  := 0x00000000
+# Stack: ISRAM early, SDRAM after hal_sdram_init()
+ROM_ADDR   := 0x00000000
 RAM_TARGET := isram
+EXTRA_RAM  := sdram
+LDSCRIPT   := $(TOP_DIR)/common/lds/boot.lds
 
 include $(TOP_DIR)/common.mk

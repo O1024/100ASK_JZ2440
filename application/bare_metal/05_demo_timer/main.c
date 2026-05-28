@@ -3,7 +3,7 @@
  * @brief Professional Timer Interrupt Application
  * 
  * This example demonstrates:
- * 1. Hardware Timer configuration (Timer 4 set to 500ms).
+ * 1. Hardware Timer configuration (Timer 4 set to 1000ms).
  * 2. Interrupt Service Routine (ISR) registration and handling.
  * 3. Thread-safe variable sharing using the 'volatile' keyword.
  * 4. Periodic telemetry reporting via UART.
@@ -22,7 +22,7 @@ extern void hal_system_init(void);
 
 #define HEARTBEAT_LED   GPF4
 #define UART_BAUD_RATE  115200
-#define TIMER_INTERVAL_MS 500
+#define TIMER_INTERVAL_MS 1000
 
 /* 
  * 'volatile' is mandatory here because this variable is modified asynchronously 
@@ -66,7 +66,7 @@ static void timer_irq_init(void) {
     /* 2. Register our custom ISR for Timer 4 */
     hal_timer4_set_handler(timer4_isr);
     
-    /* 3. Configure hardware timer to trigger every 500ms */
+    /* 3. Configure hardware timer to trigger every 1000ms */
     hal_timer4_init(TIMER_INTERVAL_MS); 
     
     /* 4. Start the timer counting */

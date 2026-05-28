@@ -3,8 +3,9 @@
 
 TARGET     := $(notdir $(CURDIR))
 TOP_DIR   := ../../..
-TEXT_BASE  := 0
-START_FILE := $(TOP_DIR)/common/arch/demo_start.S
-LDSCRIPT   := $(TOP_DIR)/common/lds/demo.lds
+ROM_ADDR   := 0x30000000
+RAM_TARGET := sdram
+START_FILE := $(TOP_DIR)/common/arch/app_start.S
+LDSCRIPT   := $(TOP_DIR)/common/lds/app.lds
 
 include $(TOP_DIR)/common.mk

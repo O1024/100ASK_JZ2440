@@ -96,12 +96,7 @@ int hal_uart_getc_timeout(uint32_t timeout_ms, char *c) {
     while ((UART0->UFSTAT & (UFSTAT_RX_COUNT | UFSTAT_RX_FULL)) == 0) {
         uint16_t current = hal_timer4_get_ticks();
         
-        if (current <= start) {
-            elapsed += (start - current);
-        } else {
-            elapsed += (start + (0xFFFF - current));
-        }
-        
+        elapsed += (uint16_t)(start - current);
         start = current;
         
         if (elapsed >= target_ticks) {

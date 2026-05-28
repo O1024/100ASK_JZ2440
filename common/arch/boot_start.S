@@ -1,7 +1,9 @@
 /**
- * @file nor_start.S
- * @brief Entry point for NOR Flash Boot.
- * Redirects interrupts to SDRAM application.
+ * @file boot_start.S
+ * @brief Entry point for Bootloader (NOR Flash Boot)
+ * @details The bootloader runs from NOR Flash at address 0.
+ *          It initializes hardware, then loads the application from NAND to SDRAM.
+ *          IRQ is redirected to the application's handler in SDRAM.
  */
 
 .text
@@ -26,7 +28,6 @@ reset_handler:
     str r1, [r0]
 
     /* 3. Setup Stacks in Internal SRAM (4KB at 0x40000000) */
-    
     /* Enter IRQ mode, disable IRQ/FIQ */
     msr cpsr_c, #0xd2
     ldr sp, =0x40001000    /* Top 1KB for IRQ stack */
@@ -45,7 +46,7 @@ bss_loop:
     blo bss_loop
 
     /* 5. Jump to C logic */
-    bl boot_main
+    bl main
 
 halt:
     b halt

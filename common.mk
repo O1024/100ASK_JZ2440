@@ -31,9 +31,23 @@ else
     CFLAGS    += -DTARGET_ISRAM
 endif
 
+# Auto-detect boot media if not specified by application
+ifeq ($(BOOT_MEDIA),)
+    ifeq ($(RAM_TARGET),sdram)
+        BOOT_MEDIA := nand
+    else
+        BOOT_MEDIA := nor
+    endif
+endif
+
+# Allow application to select a specific start file
+ifeq ($(START_FILE),)
+    START_FILE := $(ARCH_DIR)/start.S
+endif
+
 # Allow application to override entire SRCS list
 ifeq ($(SRCS),)
-    SRCS += $(ARCH_DIR)/start.S $(COMMON_DIR)/boot/relocate.c
+    SRCS += $(START_FILE) $(COMMON_DIR)/arch/relocate.c
     include $(DRIVERS_DIR)/drivers.mk
     include $(COMMON_DIR)/lib/lib.mk
     SRCS += main.c
@@ -51,10 +65,26 @@ CFLAGS   += $(INCLUDES) -O2 -Wall -march=armv4t -marm \
             -DDATA_BASE=$(RAM_ADDR) \
             -DSTACK_TOP=$(STACK_TOP)
 
+# Allow application to select a specific linker script
+ifeq ($(LDSCRIPT),)
+    ifeq ($(RAM_TARGET),sdram)
+        LDSCRIPT := $(LDS_DIR)/app.lds
+    else
+        LDSCRIPT := $(LDS_DIR)/demo.lds
+    endif
+endif
+
 # Allow application to override LDFLAGS (e.g. for custom LDS)
 ifeq ($(LDFLAGS),)
-    LDFLAGS  := -nostartfiles -Wl,--gc-sections -L $(LDS_DIR) -T $(LDS_DIR)/jz2440.lds \
-                -Wl,--defsym=_ROM_START=$(ROM_ADDR) -Wl,--defsym=_RAM_START=$(RAM_ADDR)
+    ifeq ($(RAM_TARGET),sdram)
+        # SDRAM apps: all sections in SDRAM, loaded by bootloader
+        LDFLAGS  := -nostartfiles -Wl,--gc-sections -L$(LDS_DIR) -T$(LDSCRIPT) \
+                    -Wl,--defsym=_RAM_START=$(RAM_ADDR)
+    else
+        # SRAM/NOR XIP apps: text/rodata in Flash, data/bss in SRAM
+        LDFLAGS  := -nostartfiles -Wl,--gc-sections -L$(LDS_DIR) -T$(LDSCRIPT) \
+                    -Wl,--defsym=_ROM_START=$(ROM_ADDR) -Wl,--defsym=_RAM_START=$(RAM_ADDR)
+    endif
 endif
 
 .PHONY: all clean flash flash_nor flash_nand openocd gdb
@@ -79,7 +109,7 @@ $(TARGET).bin: $(TARGET).elf
 	$(Q)$(OBJCOPY) -O binary -S $< $@
 
 $(TARGET).elf: $(OBJS)
-	@echo "  LD      $@ (using $(patsubst -T%,%,$(filter -T%,$(LDFLAGS))))"
+	@echo "  LD      $@ ($(notdir $(LDSCRIPT)), $(BOOT_MEDIA), $(RAM_TARGET)$(if $(EXTRA_RAM),+$(EXTRA_RAM)))"
 	@if [ "$(V)" = "1" ]; then echo "  LDFLAGS: $(LDFLAGS)"; fi
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
