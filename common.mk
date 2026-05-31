@@ -93,15 +93,22 @@ all: $(TARGET).bin $(TARGET).dis
 	$(Q)TEXT_SZ=$$( $(SIZE) $(TARGET).elf | awk 'NR==2 {print $$1}' ); \
 	DATA_SZ=$$( $(SIZE) $(TARGET).elf | awk 'NR==2 {print $$2}' ); \
 	BSS_SZ=$$( $(SIZE) $(TARGET).elf | awk 'NR==2 {print $$3}' ); \
-	NOR_USE=$$(($$TEXT_SZ + $$DATA_SZ)); \
-	RAM_USE=$$(($$DATA_SZ + $$BSS_SZ)); \
-	if [ "$(RAM_TARGET)" = "sdram" ]; then RAM_MAX=67108864; else RAM_MAX=4096; fi; \
+	FLASH_SZ=$$(($$TEXT_SZ + $$DATA_SZ)); \
+	if [ "$(RAM_TARGET)" = "sdram" ]; then \
+		FLASH_LABEL="Image Size"; \
+		RAM_USE=$$(($$TEXT_SZ + $$DATA_SZ + $$BSS_SZ)); \
+		RAM_MAX=67108864; \
+	else \
+		FLASH_LABEL="NOR Usage"; \
+		RAM_USE=$$(($$DATA_SZ + $$BSS_SZ)); \
+		RAM_MAX=4096; \
+	fi; \
 	RAM_PCT=$$(($$RAM_USE * 100 / $$RAM_MAX)); \
 	echo "------------------------------------------------"; \
 	echo "Build Success: $(TARGET).bin"; \
 	echo "RAM Target:  $(RAM_TARGET)"; \
 	echo "Sections:    text=$$TEXT_SZ, data=$$DATA_SZ, bss=$$BSS_SZ (bytes)"; \
-	echo "NOR Usage:   $$NOR_USE bytes"; \
+	echo "$$FLASH_LABEL:   $$FLASH_SZ bytes"; \
 	echo "RAM Usage:   $$RAM_USE / $$RAM_MAX bytes ($$RAM_PCT%)"; \
 	echo "------------------------------------------------"
 
