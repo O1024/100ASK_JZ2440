@@ -12,7 +12,6 @@
 #include "hal/hal_clock.h"
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
-#include "hal/hal_sdram.h"
 #include <stdint.h>
 
 /* Boot helper defined in relocate.c */
@@ -76,19 +75,11 @@ static void uart_echo_loop(void) {
  * @brief Application entry point.
  */
 int main(void) {
-    /* 1. Low-level Hardware (Clock/SDRAM) */
-#ifdef TARGET_SDRAM
+    /* 1. Low-level Hardware (Clock) */
     hal_clock_init();
-    hal_sdram_init();
-#endif
 
     /* 2. Data Relocation */
     hal_system_init();
-
-    /* 3. Peripheral Initialization */
-#ifndef TARGET_SDRAM
-    hal_clock_init();
-#endif
 
     /* 4. Console Setup */
     hw_init();
