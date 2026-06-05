@@ -17,6 +17,23 @@
 #define TIMER_BASE      0x51000000
 #define WDT_BASE        0x53000000
 #define GPIO_BASE       0x56000000
+#define DMA_BASE        0x4B000000
+
+typedef struct {
+    volatile uint32_t DISRC;      // Initial source address
+    volatile uint32_t DISRCC;     // Initial source control
+    volatile uint32_t DIDST;      // Initial destination address
+    volatile uint32_t DIDSTC;     // Initial destination control
+    volatile uint32_t DCON;       // DMA control
+    volatile uint32_t DSTAT;      // DMA status
+    volatile uint32_t DCSRC;      // Current source address
+    volatile uint32_t DCDST;      // Current destination address
+    volatile uint32_t DMASKTRIG;  // Mask and trigger
+} dma_ch_t;
+
+typedef struct {
+    dma_ch_t CH[4];
+} dma_t;
 
 typedef struct {
     volatile uint32_t SRCPND;
@@ -139,6 +156,7 @@ typedef struct {
 #define UART2           ((uart_t *)(UART_BASE + 0x8000))
 #define INTC            ((intc_t *)INTC_BASE)
 #define TIMER           ((timer_ctl_t *)TIMER_BASE)
+#define DMA             ((dma_t *)DMA_BASE)
 #define GPIO_PORT(n)    ((gpio_port_t *)(GPIO_BASE + (n) * 0x10))
 #define WDT_CON         (*(volatile uint32_t *)WDT_BASE)
 

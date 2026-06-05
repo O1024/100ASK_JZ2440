@@ -15,3 +15,4 @@ SRCS += $(DRV_DIR)/s3c2440_lcd.c
 SRCS += $(DRV_DIR)/s3c2440_irq.c
 SRCS += $(DRV_DIR)/s3c2440_timer.c
 SRCS += $(DRV_DIR)/s3c2440_delay.c
+SRCS += $(DRV_DIR)/s3c2440_dma.c

@@ -28,11 +28,11 @@ reset_handler:
     /* 2. Setup Stacks in Internal SRAM (4KB at 0x40000000) */
     /* Enter IRQ mode, disable IRQ/FIQ */
     msr cpsr_c, #0xd2
-    ldr sp, =0x40001000    /* Top 1KB for IRQ stack */
+    ldr sp, =0x40001000    /* Top of SRAM */
 
     /* Enter SVC mode, disable IRQ/FIQ */
     msr cpsr_c, #0xd3
-    ldr sp, =0x40000c00    /* 3KB for SVC stack */
+    ldr sp, =0x40000f00    /* SVC stack starts below IRQ stack (256 bytes for IRQ) */
 
     /* 3. Initialize C runtime (copy .data, clear .bss) */
     bl hal_system_init
