@@ -20,7 +20,9 @@ void hal_clock_init(void) {
     /* FCLK = 400MHz, HCLK = 100MHz, PCLK = 50MHz */
     CLK_PWR->MPLLCON = (92 << 12) | (1 << 4) | (1);
 
-    /* 5. Enable Peripheral Clocks in CLKCON */
+    /* Enable Peripheral Clocks in CLKCON 
+     * We keep WDT clock (bit 13) ON so we can explicitly disable it.
+     */
     CLK_PWR->CLKCON |= (1 << 8) | (1 << 10) | (1 << 13);
 }
 

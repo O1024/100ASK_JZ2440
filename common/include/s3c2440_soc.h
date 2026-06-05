@@ -29,6 +29,7 @@ typedef struct {
     volatile uint32_t DCSRC;      // Current source address
     volatile uint32_t DCDST;      // Current destination address
     volatile uint32_t DMASKTRIG;  // Mask and trigger
+    volatile uint32_t _pad[7];    // Padding to 64 bytes (16 words total)
 } dma_ch_t;
 
 typedef struct {

@@ -1,6 +1,6 @@
 /**
  * @file main.c
- * @brief DMA vs CPU Performance Comparison Demo
+ * @brief DMA vs CPU Performance Comparison Demo (Stable Version)
  */
 
 #include "hal/hal_clock.h"
@@ -8,6 +8,7 @@
 #include "hal/hal_sdram.h"
 #include "hal/hal_timer.h"
 #include "hal/hal_dma.h"
+#include "s3c2440_soc.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -18,15 +19,6 @@ extern void hal_system_init(void);
 #define TEST_SIZE (1024 * 1024) // 1MB data
 #define SRC_ADDR  0x30100000    // SDRAM
 #define DST_ADDR  0x30200000    // SDRAM
-
-/**
- * @brief Initialize critical hardware
- */
-static void hw_init(void) {
-    hal_clock_init();
-    hal_sdram_init();
-    hal_uart_init(UART_BAUD_RATE);
-}
 
 /**
  * @brief Print a 32-bit hex value to UART
@@ -61,11 +53,12 @@ static void print_dec(uint32_t val) {
  * @brief Application entry point.
  */
 int main(void) {
-    /* 1. Hardware Initialization */
-    hw_init();
-
-    /* 2. Initialize C Runtime */
-    hal_system_init();
+    /* 1. Critical Early Initialization */
+    WDT_CON = 0;           // Disable Watchdog immediately
+    hal_clock_init();      // Setup FCLK=400MHz, PCLK=50MHz
+    hal_sdram_init();      // Setup SDRAM
+    hal_uart_init(UART_BAUD_RATE);
+    hal_system_init();     // Relocate data and clear BSS
 
     hal_uart_puts("\r\n========================================\r\n");
     hal_uart_puts("    DMA vs CPU Performance Comparison    \r\n");

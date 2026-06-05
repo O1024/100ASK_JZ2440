@@ -31,7 +31,10 @@ void hal_timer4_init(uint32_t ms) {
 
 void hal_timer4_start(void) {
     TIMER->TCON |= (1 << 20);      /* Kick off */
-    hal_irq_enable(IRQ_TIMER4);
+    /* Only enable IRQ if it was requested (i.e. TINT_CSTAT bit 4 is set) */
+    if (TIMER->TINT_CSTAT & (1 << 4)) {
+        hal_irq_enable(IRQ_TIMER4);
+    }
 }
 
 void hal_timer4_stop(void) {
@@ -57,8 +60,11 @@ void hal_timer4_init_freerun(void) {
     TIMER->TCON |= (1 << 21);
     TIMER->TCON &= ~(1 << 21);
     
-    /* 4. Auto Reload setup (No Interrupts enabled in TINT_CSTAT) */
+    /* 4. Auto Reload setup (Disable Interrupts in TINT_CSTAT bit 4) 
+     * Also clear any pending status bit (bit 9)
+     */
     TIMER->TCON |= (1 << 22);
+    TIMER->TINT_CSTAT = (TIMER->TINT_CSTAT & 0x1E) | (1 << 9);
 }
 
 uint16_t hal_timer4_get_ticks(void) {
