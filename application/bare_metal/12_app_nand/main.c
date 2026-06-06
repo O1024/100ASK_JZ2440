@@ -36,9 +36,8 @@ static void nand_diagnostics(void) {
     int status;
     const char *test_msg = "JZ2440 Professional NAND Diagnostic Pattern: 0x55AA55AA";
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("    Professional NAND Diagnostic Tool   \r\n");
-    hal_uart_puts("========================================\r\n");
+    BSP_PRINT_BANNER("12 NAND Flash Diagnostic Demo");
+    hal_uart_puts("Test Block: "); print_hex32(TEST_BLOCK); hal_uart_puts("\r\n");
 
     hal_nand_read_id(id_buf);
     hal_uart_puts("[Phase 1] Chip Identification\r\n");
@@ -51,9 +50,7 @@ static void nand_diagnostics(void) {
     hal_uart_puts("  Block Size: 128 KB\r\n");
     hal_uart_puts("  Total Size: 256 MB\r\n");
 
-    hal_uart_puts("\r\n[Phase 3] Bad Block Scan (Target Block ");
-    print_hex32(TEST_BLOCK);
-    hal_uart_puts(")\r\n");
+    hal_uart_puts("\r\n[Phase 3] Bad Block Scan\r\n");
 
     if (hal_nand_check_bad_block(TEST_BLOCK)) {
         hal_uart_puts("  WARNING: Block is BAD. Aborting test.\r\n");

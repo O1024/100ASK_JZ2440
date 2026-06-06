@@ -112,6 +112,51 @@ void bsp_eth_init(void) {
 }
 
 /**
+ * @brief 打印频率值（MHz，保留 1 位小数）
+ */
+void bsp_print_mhz(uint32_t hz) {
+    uint32_t mhz_int = hz / 1000000;
+    uint32_t mhz_frac = (hz / 100000) % 10;
+
+    char buf[12];
+    int i = 11;
+    buf[i] = '\0';
+
+    /* Fractional part */
+    buf[--i] = (char)('0' + mhz_frac);
+    buf[--i] = '.';
+
+    /* Integer part */
+    if (mhz_int == 0) {
+        buf[--i] = '0';
+    } else {
+        while (mhz_int > 0 && i > 0) {
+            buf[--i] = (char)('0' + (mhz_int % 10));
+            mhz_int /= 10;
+        }
+    }
+
+    hal_uart_puts(&buf[i]);
+}
+
+/**
+ * @brief 打印统一的实验启动横幅
+ */
+void bsp_print_banner_ex(const char *app_name, const char *build_date, const char *build_time) {
+    hal_uart_puts("\r\n");
+    hal_uart_puts("========================================\r\n");
+    hal_uart_puts("       JZ2440 Unified SDK\r\n");
+    hal_uart_puts("========================================\r\n");
+    hal_uart_puts("  Application : "); hal_uart_puts(app_name); hal_uart_puts("\r\n");
+    hal_uart_puts("  Build Time  : "); hal_uart_puts(build_date);
+    hal_uart_puts(" "); hal_uart_puts(build_time); hal_uart_puts("\r\n");
+    hal_uart_puts("  FCLK        : "); bsp_print_mhz(hal_clock_get_fclk()); hal_uart_puts(" MHz\r\n");
+    hal_uart_puts("  HCLK        : "); bsp_print_mhz(hal_clock_get_hclk()); hal_uart_puts(" MHz\r\n");
+    hal_uart_puts("  PCLK        : "); bsp_print_mhz(hal_clock_get_pclk()); hal_uart_puts(" MHz\r\n");
+    hal_uart_puts("----------------------------------------\r\n");
+}
+
+/**
  * @brief 获取系统 tick
  * 使用 Timer4 作为时基
  */

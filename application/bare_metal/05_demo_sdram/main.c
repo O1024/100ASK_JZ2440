@@ -53,17 +53,14 @@ int main(void) {
     /* 2. C Runtime */
     hal_system_init();
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("    Professional SDRAM Diagnostic Tool    \r\n");
-    hal_uart_puts("========================================\r\n");
+    BSP_PRINT_BANNER("05 SDRAM Diagnostic Demo");
     hal_uart_puts("Base Address : "); print_hex32(BSP_SDRAM_BASE); hal_uart_puts("\r\n");
     hal_uart_puts("Total Size   : 64 MB\r\n");
-    hal_uart_puts("----------------------------------------\r\n");
+    hal_uart_puts("Test Scope   : First 1 MB with 4 patterns\r\n");
 
     uint32_t test_size = 1024 * 1024;
     int errors = 0;
 
-    hal_uart_puts("Starting Fast Diagnostic (First 1MB)...\r\n");
     errors += sdram_test_chunk(BSP_SDRAM_BASE, test_size, 0x55555555);
     errors += sdram_test_chunk(BSP_SDRAM_BASE, test_size, 0xAAAAAAAA);
     errors += sdram_test_chunk(BSP_SDRAM_BASE, test_size, 0x00000000);

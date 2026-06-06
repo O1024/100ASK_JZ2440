@@ -41,11 +41,8 @@ int main(void) {
     bsp_init();
     hal_system_init();
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("    I-Cache Performance Benchmark Demo    \r\n");
-    hal_uart_puts("========================================\r\n");
+    BSP_PRINT_BANNER("08 I-Cache Benchmark Demo");
     hal_uart_puts("Iterations: "); print_dec(ITERATIONS); hal_uart_puts("\r\n");
-    hal_uart_puts("----------------------------------------\r\n");
 
     hal_timer4_init_freerun();
     hal_timer4_start();

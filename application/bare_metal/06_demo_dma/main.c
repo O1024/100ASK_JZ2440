@@ -46,13 +46,10 @@ int main(void) {
     bsp_uart_init();
     hal_system_init();
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("    DMA vs CPU Performance Comparison    \r\n");
-    hal_uart_puts("========================================\r\n");
+    BSP_PRINT_BANNER("06 DMA vs CPU Performance Demo");
     hal_uart_puts("Transfer Size: 1 MB\r\n");
     hal_uart_puts("Source Addr  : "); print_hex32(SRC_ADDR); hal_uart_puts("\r\n");
     hal_uart_puts("Dest Addr    : "); print_hex32(DST_ADDR); hal_uart_puts("\r\n");
-    hal_uart_puts("----------------------------------------\r\n");
 
     hal_timer4_init_freerun();
     hal_timer4_start();

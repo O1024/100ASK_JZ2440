@@ -12,16 +12,6 @@ extern void hal_system_init(void);
 
 #define HEARTBEAT_LED   BSP_LED1
 
-static void print_banner(void) {
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("    JZ2440 Professional UART Console    \r\n");
-    hal_uart_puts("========================================\r\n");
-    hal_uart_puts("System   : ARM920T (S3C2440)\r\n");
-    hal_uart_puts("Settings : 115200 8N1\r\n");
-    hal_uart_puts("Status   : Ready for input...\r\n");
-    hal_uart_puts("----------------------------------------\r\n> ");
-}
-
 static void uart_echo_loop(void) {
     while (1) {
         char c = hal_uart_getc();
@@ -46,8 +36,11 @@ int main(void) {
     bsp_uart_init();
     bsp_gpio_init();
 
-    /* 4. Console loop */
-    print_banner();
+    BSP_PRINT_BANNER("03 UART Console Demo");
+    hal_uart_puts("Settings: 115200 8N1\r\n");
+    hal_uart_puts("Status  : Ready for input...\r\n");
+    hal_uart_puts("----------------------------------------\r\n> ");
+
     uart_echo_loop();
 
     return 0;

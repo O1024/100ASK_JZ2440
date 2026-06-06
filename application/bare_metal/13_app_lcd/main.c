@@ -33,10 +33,9 @@ int main(void) {
     bsp_lcd_init();
     bsp_gpio_init();
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("      JZ2440 Professional LCD Demo      \r\n");
-    hal_uart_puts("========================================\r\n");
-    hal_uart_puts("Execution: SDRAM (0x30000000)\r\n");
+    BSP_PRINT_BANNER("13 LCD Graphics Demo");
+    hal_uart_puts("Panel  : 480x272, 16 bpp RGB565\r\n");
+    hal_uart_puts("FB Addr: 0x33800000\r\n");
 
     draw_demo_ui();
 

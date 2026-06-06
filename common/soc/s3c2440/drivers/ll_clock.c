@@ -39,11 +39,21 @@ void ll_clock_reset(void) {
     CLK_PWR->MPLLCON = (0x96 << 12) | (0x05 << 4) | (0x02);
 }
 
-uint32_t ll_clock_get_pclk(void) {
-    /* Since we only support fixed configurations for now, we return 50MHz or 12MHz based on MPLL */
+uint32_t ll_clock_get_fclk(void) {
+    /* CLKDIVN=0x05: FCLK = 400MHz when MPLL is configured for 400MHz, else 12MHz */
     if (CLK_PWR->MPLLCON == ((92 << 12) | (1 << 4) | (1))) {
-        return 50000000;
+        return 400000000;
     } else {
         return 12000000;
     }
+}
+
+uint32_t ll_clock_get_hclk(void) {
+    /* CLKDIVN=0x05: HCLK = FCLK / 4 */
+    return ll_clock_get_fclk() / 4;
+}
+
+uint32_t ll_clock_get_pclk(void) {
+    /* CLKDIVN=0x05: PCLK = HCLK / 2 = FCLK / 8 */
+    return ll_clock_get_fclk() / 8;
 }

@@ -27,7 +27,9 @@ int main(void) {
 #endif
 
     bsp_uart_init();
-    hal_uart_puts("\r\n--- JZ2440 DM9000 Ethernet Test ---\r\n");
+
+    BSP_PRINT_BANNER("14 Ethernet (DM9000) Test");
+    hal_uart_puts("Mode: MAC Loopback\r\n");
 
     bsp_eth_init();
     hal_uart_puts("[ETH] DM9000 loopback initialized.\r\n");

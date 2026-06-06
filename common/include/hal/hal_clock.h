@@ -19,6 +19,16 @@ void hal_clock_init(void);
 void hal_clock_reset(void);
 
 /**
+ * @brief 获取当前 FCLK 频率 (单位: Hz)
+ */
+uint32_t hal_clock_get_fclk(void);
+
+/**
+ * @brief 获取当前 HCLK 频率 (单位: Hz)
+ */
+uint32_t hal_clock_get_hclk(void);
+
+/**
  * @brief 获取当前 PCLK 频率 (单位: Hz)
  */
 uint32_t hal_clock_get_pclk(void);

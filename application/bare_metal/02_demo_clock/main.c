@@ -1,9 +1,6 @@
 /**
  * @file main.c
  * @brief Clock Configuration Demo using BSP + HAL
- *
- * Demonstrates FCLK=400MHz CPU clock via bsp_clock_init(),
- * and visual confirmation using LEDs.
  */
 
 #include "bsp_init.h"

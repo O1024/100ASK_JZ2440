@@ -52,6 +52,25 @@
 void bsp_init(void);
 
 /**
+ * @brief 打印统一的实验启动横幅
+ *
+ * 包含：JZ2440 标识、应用名称、编译时间、时钟频率。
+ * 使用时请通过 BSP_PRINT_BANNER(app_name) 宏调用，
+ * 以便正确捕获当前文件的编译时间。
+ */
+void bsp_print_banner_ex(const char *app_name, const char *build_date, const char *build_time);
+
+/**
+ * @brief 打印频率值（MHz，保留 1 位小数）
+ */
+void bsp_print_mhz(uint32_t hz);
+
+/**
+ * @brief 便捷的横幅打印宏，自动捕获 __DATE__ / __TIME__
+ */
+#define BSP_PRINT_BANNER(name)  bsp_print_banner_ex((name), __DATE__, __TIME__)
+
+/**
  * @brief 初始化系统时钟
  */
 void bsp_clock_init(void);

@@ -188,11 +188,10 @@ int main(void) {
     hal_system_init();
 
     switch_to_sdram_stack();
-    hal_uart_puts("[Boot] Stack switched to SDRAM.\r\n");
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("   JZ2440 Professional NOR Bootloader   \r\n");
-    hal_uart_puts("========================================\r\n");
+    BSP_PRINT_BANNER("10 Professional NOR Bootloader");
+    hal_uart_puts("Mode   : Stage 2 Bootloader with YModem update\r\n");
+    hal_uart_puts("Target : Load app from NAND offset 0x40000 to SDRAM 0x30000000\r\n");
 
     hal_uart_puts("\r\nPress any key within 3 seconds to enter update mode...\r\n");
     int update = 0;

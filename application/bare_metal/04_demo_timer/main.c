@@ -54,9 +54,8 @@ int main(void) {
     bsp_uart_init();
     bsp_gpio_init();
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("      Professional Timer Interrupt      \r\n");
-    hal_uart_puts("========================================\r\n");
+    BSP_PRINT_BANNER("04 Timer Interrupt Demo");
+    hal_uart_puts("Config: Timer4 periodic interrupt every 1000 ms.\r\n");
 
     timer_irq_init();
 

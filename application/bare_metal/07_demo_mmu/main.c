@@ -89,10 +89,9 @@ int main(void) {
     bsp_init();
     hal_system_init();
 
-    hal_uart_puts("\r\n========================================\r\n");
-    hal_uart_puts("    MMU Demo - ARM920T (S3C2440)        \r\n");
-    hal_uart_puts("    Running from NOR/ISRAM               \r\n");
-    hal_uart_puts("========================================\r\n");
+    BSP_PRINT_BANNER("07 MMU Demo");
+    hal_uart_puts("Mode   : Running from NOR/ISRAM\r\n");
+    hal_uart_puts("Target : Virtual 0xA0000000 -> Physical 0x30000000\r\n");
 
     volatile uint32_t *p_phys = (volatile uint32_t *)BSP_SDRAM_BASE;
     *p_phys = 0x12345678;
