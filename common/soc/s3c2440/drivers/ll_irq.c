@@ -52,15 +52,12 @@ void handle_irq(void) {
         irq_handlers[offset]();
     }
 
-    /* 2. Clear Timer-side status in TINT_CSTAT (bits 5-9) if applicable */
-    if (offset >= 10 && offset <= 14) {
-        volatile uint32_t *tint_cstat = (volatile uint32_t *)0x51000044;
-        uint32_t val = *tint_cstat;
-        /* Preserve enable bits (0-4), set the status bit (5-9) to clear it */
-        *tint_cstat = (val & 0x1F) | (1 << (offset - 10 + 5));
-    }
+    /*
+     * S3C2440A 没有 TINT_CSTAT 寄存器。
+     * Timer 中断清除仅通过主 INTC 的 SRCPND/INTPND 完成。
+     */
 
-    /* 3. Clear INTC flags (SRCPND then INTPND) */
+    /* 2. Clear INTC flags (SRCPND then INTPND) */
     SRCPND = bit;
     INTPND = bit;
 }

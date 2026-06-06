@@ -65,7 +65,6 @@ typedef struct {
     volatile uint32_t TCNTO3;   /* 0x38 */
     volatile uint32_t TCNTB4;   /* 0x3C - Correct! */
     volatile uint32_t TCNTO4;   /* 0x40 */
-    volatile uint32_t TINT_CSTAT; /* 0x44 */
 } timer_ctl_t;
 
 typedef struct {
@@ -100,8 +99,12 @@ typedef struct {
     volatile uint32_t GREENLUT;
     volatile uint32_t BLUELUT;
     volatile uint32_t _pad0[8];
-    volatile uint32_t DITHMODE;
-    volatile uint32_t TPAL;
+    volatile uint32_t DITHMODE;    /* 0x4C */
+    volatile uint32_t TPAL;        /* 0x50 */
+    volatile uint32_t LCDINTPND;   /* 0x54 */
+    volatile uint32_t LCDSRCPND;   /* 0x58 */
+    volatile uint32_t LCDINTMSK;   /* 0x5C */
+    volatile uint32_t TCONSEL;     /* 0x60 */
 } lcd_ctl_t;
 
 typedef struct {
@@ -122,7 +125,8 @@ typedef struct {
     volatile uint32_t NFMECC0;
     volatile uint32_t NFMECC1;
     volatile uint32_t NFSECC;
-    volatile uint32_t NFMLCBITPT;
+    volatile uint32_t NFSBLK;       /* 0x38 - Start block address */
+    volatile uint32_t NFEBLK;       /* 0x3C - End block address   */
 } nand_t;
 
 typedef struct {

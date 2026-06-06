@@ -25,16 +25,16 @@ void ll_timer4_init(uint32_t ms) {
     /* 4. Auto Reload setup */
     TIMER->TCON |= (1 << 22);
 
-    /* 5. Clear status (Bit 9) and Enable Timer 4 interrupt locally in TINT_CSTAT (Bit 4) */
-    TIMER->TINT_CSTAT = (TIMER->TINT_CSTAT & 0x1F) | (1 << 4) | (1 << 9);
+    /*
+     * S3C2440A 没有 TINT_CSTAT 寄存器。
+     * Timer4 中断使能通过主 INTC (INTMSK) 控制，
+     * 中断状态清除通过 SRCPND/INTPND 完成。
+     */
 }
 
 void ll_timer4_start(void) {
     TIMER->TCON |= (1 << 20);      /* Kick off */
-    /* Only enable IRQ if it was requested (i.e. TINT_CSTAT bit 4 is set) */
-    if (TIMER->TINT_CSTAT & (1 << 4)) {
-        ll_irq_enable(IRQ_TIMER4);
-    }
+    ll_irq_enable(IRQ_TIMER4);
 }
 
 void ll_timer4_stop(void) {
@@ -60,11 +60,13 @@ void ll_timer4_init_freerun(void) {
     TIMER->TCON |= (1 << 21);
     TIMER->TCON &= ~(1 << 21);
     
-    /* 4. Auto Reload setup (Disable Interrupts in TINT_CSTAT bit 4) 
-     * Also clear any pending status bit (bit 9)
-     */
+    /* 4. Auto Reload setup */
     TIMER->TCON |= (1 << 22);
-    TIMER->TINT_CSTAT = (TIMER->TINT_CSTAT & 0x1E) | (1 << 9);
+
+    /*
+     * S3C2440A 没有 TINT_CSTAT 寄存器。
+     * Free-run 模式不启用中断，无需额外清除操作。
+     */
 }
 
 uint16_t ll_timer4_get_ticks(void) {
