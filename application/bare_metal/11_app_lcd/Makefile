@@ -1,6 +1,6 @@
 # JZ2440 Unified SDK Application Makefile
 
-TARGET     := 12_app_lcd
+TARGET     := 11_app_lcd
 TOP_DIR   := ../../..
 
 # This application is designed to be loaded into SDRAM by the bootloader
