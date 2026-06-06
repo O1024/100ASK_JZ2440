@@ -27,7 +27,7 @@
 | :--- | :--- | :--- |
 | **应用层 (App)** | `application/` | 业务逻辑实现，仅调用 HAL 接口，不直接操作寄存器。 |
 | **抽象层 (HAL)** | `common/include/hal/` | 定义统一的硬件操作标准 (如 `hal_gpio_set`, `hal_uart_puts`)。 |
-| **驱动层 (LLD)** | `common/drivers/` | 针对 S3C2440 的具体实现，采用查表法优化寄存器访问。 |
+| **SoC 驱动层** | `common/soc/s3c2440/drivers/` | 针对 S3C2440 的 HAL 具体实现，采用查表法优化寄存器访问。 |
 | **架构层 (Arch)** | `common/arch/` | ARM920T 核心初始化、堆栈设置及异常向量表定义。 |
 | **构建系统 (Build)** | `common.mk` | 核心构建引擎，集成了交叉工具链配置与自动化规则。 |
 
@@ -41,10 +41,13 @@
 │   └── bare_metal/         # 裸机实验案例 (LED, UART, NAND, LCD...)
 ├── common/                 # 核心共享组件
 │   ├── arch/               # CPU 级启动代码与链接脚本
-│   ├── drivers/            # 基于 S3C2440 的硬件驱动实现
-│   └── include/            # SDK 公共头文件
-│       ├── hal/            # 硬件抽象层标准接口
-│       └── s3c2440_soc.h   # 寄存器映射定义
+│   ├── include/            # SDK 公共头文件
+│   │   └── hal/            # 硬件抽象层标准接口
+│   ├── lib/                # 通用库（CRC, YModem, String...）
+│   └── soc/                # SoC 驱动实现（支持多芯片）
+│       └── s3c2440/        # S3C2440 专用实现
+│           ├── drivers/    # HAL 接口的 S3C2440 实现
+│           └── include/    # S3C2440 寄存器映射定义
 ├── tools/                  # 辅助工具配置
 │   ├── openocd/            # JZ2440 调试服务器配置
 │   └── gdb/                # GDB 自动化调试初始化脚本

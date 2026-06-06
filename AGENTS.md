@@ -33,9 +33,9 @@
 ## 添加代码
 
 - **新建裸机应用：** 在 `application/bare_metal/` 下创建目录，添加 `main.c` 和遵循上述模板的 `Makefile`。参考同类应用复制 `TEXT_BASE`。
-- **新建驱动：** 在 `common/drivers/` 添加 `.c` 文件，然后在 `common/drivers/drivers.mk` 中注册。链接器使用 `--gc-sections`，因此将所有驱动加入 `SRCS` 是安全的。
-- **新建 HAL 接口：** 在 `common/include/hal/hal_<模块>.h` 中声明，在 `common/drivers/s3c2440_<模块>.c` 中实现。
-- **寄存器定义：** 放在 `common/include/s3c2440_soc.h`（基于结构体的内存映射）。
+- **新建驱动：** 在 `common/soc/$(SOC)/drivers/` 添加 `.c` 文件，然后在 `common/soc/$(SOC)/drivers/drivers.mk` 中注册。链接器使用 `--gc-sections`，因此将所有驱动加入 `SRCS` 是安全的。
+- **新建 HAL 接口：** 在 `common/include/hal/hal_<模块>.h` 中声明，在 `common/soc/$(SOC)/drivers/s3c2440_<模块>.c` 中实现。
+- **寄存器定义：** 放在 `common/soc/$(SOC)/include/s3c2440_soc.h`（基于结构体的内存映射）。
 - **应用层规则：** 应用代码只能调用 HAL API (`hal_<模块>_<动作>`)。禁止在 `main.c` 中直接操作寄存器。
 
 ## 烧录与调试

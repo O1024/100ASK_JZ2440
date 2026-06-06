@@ -7,13 +7,20 @@ TOP_DIR   := ../../..
 # (We need the drivers because boot_main.c uses Clock, UART, NAND, etc.)
 SRCS      := $(TOP_DIR)/common/arch/boot_start.S \
              $(TOP_DIR)/common/arch/relocate.c \
-             $(TOP_DIR)/common/drivers/s3c2440_gpio.c \
-             $(TOP_DIR)/common/drivers/s3c2440_clock.c \
-             $(TOP_DIR)/common/drivers/s3c2440_uart.c \
-             $(TOP_DIR)/common/drivers/s3c2440_nand.c \
-             $(TOP_DIR)/common/drivers/s3c2440_sdram.c \
-             $(TOP_DIR)/common/drivers/s3c2440_timer.c \
-             $(TOP_DIR)/common/drivers/s3c2440_delay.c \
+             $(TOP_DIR)/common/soc/s3c2440/drivers/ll_gpio.c \
+             $(TOP_DIR)/common/soc/s3c2440/drivers/ll_clock.c \
+             $(TOP_DIR)/common/soc/s3c2440/drivers/ll_uart.c \
+             $(TOP_DIR)/common/soc/s3c2440/drivers/ll_nand.c \
+             $(TOP_DIR)/common/soc/s3c2440/drivers/ll_sdram.c \
+             $(TOP_DIR)/common/soc/s3c2440/drivers/ll_timer.c \
+             $(TOP_DIR)/common/soc/s3c2440/drivers/ll_delay.c \
+             $(TOP_DIR)/common/hal/hal_gpio.c \
+             $(TOP_DIR)/common/hal/hal_clock.c \
+             $(TOP_DIR)/common/hal/hal_uart.c \
+             $(TOP_DIR)/common/hal/hal_nand.c \
+             $(TOP_DIR)/common/hal/hal_sdram.c \
+             $(TOP_DIR)/common/hal/hal_timer.c \
+             $(TOP_DIR)/common/hal/hal_delay.c \
              $(TOP_DIR)/common/lib/crc16.c \
              $(TOP_DIR)/common/lib/ymodem.c \
              main.c

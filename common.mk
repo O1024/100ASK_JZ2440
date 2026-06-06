@@ -16,8 +16,18 @@ TOP_DIR    ?= .
 COMMON_DIR := $(TOP_DIR)/common
 ARCH_DIR   := $(COMMON_DIR)/arch
 LDS_DIR    := $(COMMON_DIR)/lds
-DRIVERS_DIR := $(COMMON_DIR)/drivers
 INCLUDE_DIR := $(COMMON_DIR)/include
+
+# --- SoC Selection ---
+# SOC: s3c2440 (default), or other SoC when adding new chips
+SOC        ?= s3c2440
+SOC_DIR    := $(COMMON_DIR)/soc/$(SOC)
+DRIVERS_DIR := $(SOC_DIR)/drivers
+
+# --- Board Selection ---
+# BOARD: jz2440 (default), or other boards using the same SoC
+BOARD      ?= jz2440
+BOARD_DIR  := $(COMMON_DIR)/bsp/$(BOARD)
 
 ROM_ADDR := 0x00000000
 
@@ -50,6 +60,7 @@ ifeq ($(SRCS),)
     SRCS += $(START_FILE) $(COMMON_DIR)/arch/relocate.c
     include $(DRIVERS_DIR)/drivers.mk
     include $(COMMON_DIR)/lib/lib.mk
+    include $(BOARD_DIR)/bsp.mk
     SRCS += main.c
 endif
 
@@ -57,7 +68,7 @@ OBJS := $(addsuffix .o, $(basename $(SRCS)))
 DEPS := $(OBJS:.o=.d)
 
 # --- Compiler Flags ---
-INCLUDES := -I$(INCLUDE_DIR) -I$(COMMON_DIR)/include
+INCLUDES := -I$(INCLUDE_DIR) -I$(COMMON_DIR)/include -I$(SOC_DIR)/include -I$(BOARD_DIR)
 CFLAGS   += $(INCLUDES) -O2 -Wall -march=armv4t -marm \
             -fno-stack-protector -ffunction-sections -fdata-sections \
             -fno-builtin -MMD -MP \
