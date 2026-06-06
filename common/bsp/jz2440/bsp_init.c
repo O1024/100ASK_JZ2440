@@ -11,7 +11,9 @@
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_sdram.h"
-#include "s3c2440_soc.h"
+#include "hal/hal_nand.h"
+#include "hal/hal_lcd.h"
+#include "hal/hal_eth.h"
 
 /**
  * @brief 板级总初始化
@@ -29,6 +31,14 @@ void bsp_init(void) {
 
     /* 4. 初始化 SDRAM（后续可能用到） */
     bsp_sdram_init();
+}
+
+/**
+ * @brief 初始化系统时钟
+ * JZ2440: FCLK=400MHz, HCLK=100MHz, PCLK=50MHz
+ */
+void bsp_clock_init(void) {
+    hal_clock_init();
 }
 
 /**
@@ -78,6 +88,27 @@ void bsp_gpio_init(void) {
  */
 void bsp_sdram_init(void) {
     hal_sdram_init();
+}
+
+/**
+ * @brief 初始化板载 NAND 控制器
+ */
+void bsp_nand_init(void) {
+    hal_nand_init();
+}
+
+/**
+ * @brief 初始化板载 LCD
+ */
+void bsp_lcd_init(void) {
+    hal_lcd_init();
+}
+
+/**
+ * @brief 初始化板载以太网（DM9000）
+ */
+void bsp_eth_init(void) {
+    hal_eth_init_loopback();
 }
 
 /**

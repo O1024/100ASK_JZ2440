@@ -1,28 +1,21 @@
 /**
  * @file main.c
- * @brief DMA vs CPU Performance Comparison Demo (Stable Version)
+ * @brief DMA vs CPU Performance Demo using BSP + HAL
  */
 
-#include "hal/hal_clock.h"
+#include "bsp_init.h"
 #include "hal/hal_uart.h"
-#include "hal/hal_sdram.h"
 #include "hal/hal_timer.h"
 #include "hal/hal_dma.h"
-#include "s3c2440_soc.h"
 #include <stdint.h>
 #include <stddef.h>
 
-/* Boot helper defined in relocate.c */
 extern void hal_system_init(void);
 
-#define UART_BAUD_RATE 115200
-#define TEST_SIZE (1024 * 1024) // 1MB data
-#define SRC_ADDR  0x30100000    // SDRAM
-#define DST_ADDR  0x30200000    // SDRAM
+#define TEST_SIZE   (1024 * 1024)
+#define SRC_ADDR    0x30100000
+#define DST_ADDR    0x30200000
 
-/**
- * @brief Print a 32-bit hex value to UART
- */
 static void print_hex32(uint32_t val) {
     const char hex_chars[] = "0123456789ABCDEF";
     hal_uart_puts("0x");
@@ -31,9 +24,6 @@ static void print_hex32(uint32_t val) {
     }
 }
 
-/**
- * @brief Print a decimal value to UART
- */
 static void print_dec(uint32_t val) {
     char buf[12];
     int i = 11;
@@ -49,16 +39,12 @@ static void print_dec(uint32_t val) {
     hal_uart_puts(&buf[i]);
 }
 
-/**
- * @brief Application entry point.
- */
 int main(void) {
     /* 1. Critical Early Initialization */
-    WDT_CON = 0;           // Disable Watchdog immediately
-    hal_clock_init();      // Setup FCLK=400MHz, PCLK=50MHz
-    hal_sdram_init();      // Setup SDRAM
-    hal_uart_init(UART_BAUD_RATE);
-    hal_system_init();     // Relocate data and clear BSS
+    bsp_clock_init();
+    bsp_sdram_init();
+    bsp_uart_init();
+    hal_system_init();
 
     hal_uart_puts("\r\n========================================\r\n");
     hal_uart_puts("    DMA vs CPU Performance Comparison    \r\n");
@@ -68,7 +54,6 @@ int main(void) {
     hal_uart_puts("Dest Addr    : "); print_hex32(DST_ADDR); hal_uart_puts("\r\n");
     hal_uart_puts("----------------------------------------\r\n");
 
-    /* Initialize Timer 4 for high-resolution timing (approx 32us per tick) */
     hal_timer4_init_freerun();
     hal_timer4_start();
 
@@ -77,7 +62,7 @@ int main(void) {
     uint32_t count = TEST_SIZE / 4;
 
     /* --- CPU Copy Test --- */
-    hal_uart_puts("Preparing CPU Copy (Initializing data)... ");
+    hal_uart_puts("Preparing CPU Copy... ");
     for (uint32_t i = 0; i < count; i++) src[i] = i;
     for (uint32_t i = 0; i < count; i++) dst[i] = 0;
     hal_uart_puts("Done.\r\n");
@@ -88,30 +73,25 @@ int main(void) {
         dst[i] = src[i];
     }
     uint16_t end_ticks = hal_timer4_get_ticks();
-    
-    // Timer 4 is a down-counter
+
     uint32_t cpu_ticks = (start_ticks >= end_ticks) ? (start_ticks - end_ticks) : (0xFFFF - end_ticks + start_ticks + 1);
     hal_uart_puts("Done.\r\n");
     hal_uart_puts("CPU Ticks: "); print_dec(cpu_ticks); hal_uart_puts("\r\n");
-    
     if (cpu_ticks > 0) {
-        hal_uart_puts("CPU Speed: ");
-        print_dec(262144 / cpu_ticks);
-        hal_uart_puts(" Mbps\r\n");
+        hal_uart_puts("CPU Speed: "); print_dec(262144 / cpu_ticks); hal_uart_puts(" Mbps\r\n");
     }
 
-    /* Verify CPU Copy */
     int err = 0;
     for (uint32_t i = 0; i < count; i++) {
         if (dst[i] != src[i]) { err = 1; break; }
     }
-    if (err) hal_uart_puts("RESULT: CPU Copy Verification FAILED!\r\n");
-    else hal_uart_puts("RESULT: CPU Copy Verification PASSED.\r\n");
+    if (err) hal_uart_puts("RESULT: CPU Copy FAILED!\r\n");
+    else     hal_uart_puts("RESULT: CPU Copy PASSED.\r\n");
 
     hal_uart_puts("----------------------------------------\r\n");
 
     /* --- DMA Copy Test --- */
-    hal_uart_puts("Preparing DMA Copy (Clearing dest)... ");
+    hal_uart_puts("Preparing DMA Copy... ");
     for (uint32_t i = 0; i < count; i++) dst[i] = 0;
     hal_uart_puts("Done.\r\n");
 
@@ -137,26 +117,22 @@ int main(void) {
     uint32_t dma_ticks = (start_ticks >= end_ticks) ? (start_ticks - end_ticks) : (0xFFFF - end_ticks + start_ticks + 1);
     hal_uart_puts("Done.\r\n");
     hal_uart_puts("DMA Ticks: "); print_dec(dma_ticks); hal_uart_puts("\r\n");
-
     if (dma_ticks > 0) {
-        hal_uart_puts("DMA Speed: ");
-        print_dec(262144 / dma_ticks);
-        hal_uart_puts(" Mbps\r\n");
+        hal_uart_puts("DMA Speed: "); print_dec(262144 / dma_ticks); hal_uart_puts(" Mbps\r\n");
     }
 
-    /* Verify DMA Copy */
     err = 0;
     for (uint32_t i = 0; i < count; i++) {
         if (dst[i] != src[i]) { err = 1; break; }
     }
-    if (err) hal_uart_puts("RESULT: DMA Copy Verification FAILED!\r\n");
-    else hal_uart_puts("RESULT: DMA Copy Verification PASSED.\r\n");
+    if (err) hal_uart_puts("RESULT: DMA Copy FAILED!\r\n");
+    else     hal_uart_puts("RESULT: DMA Copy PASSED.\r\n");
 
     hal_uart_puts("----------------------------------------\r\n");
     if (dma_ticks > 0) {
         hal_uart_puts("DMA is approx ");
         print_dec(cpu_ticks / dma_ticks);
-        hal_uart_puts(" times faster than simple CPU loop.\r\n");
+        hal_uart_puts(" times faster than CPU loop.\r\n");
     }
     hal_uart_puts("========================================\r\n");
 

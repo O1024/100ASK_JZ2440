@@ -52,6 +52,11 @@
 void bsp_init(void);
 
 /**
+ * @brief 初始化系统时钟
+ */
+void bsp_clock_init(void);
+
+/**
  * @brief 初始化板载 UART
  */
 void bsp_uart_init(void);
@@ -65,6 +70,21 @@ void bsp_gpio_init(void);
  * @brief 初始化板载 SDRAM
  */
 void bsp_sdram_init(void);
+
+/**
+ * @brief 初始化板载 NAND 控制器
+ */
+void bsp_nand_init(void);
+
+/**
+ * @brief 初始化板载 LCD
+ */
+void bsp_lcd_init(void);
+
+/**
+ * @brief 初始化板载以太网（DM9000）
+ */
+void bsp_eth_init(void);
 
 /**
  * @brief 获取系统 tick（用于超时判断）

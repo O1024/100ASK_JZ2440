@@ -1,42 +1,37 @@
 /**
  * @file main.c
- * @brief Ethernet (DM9000) Basic Test (Corrected API)
+ * @brief Ethernet (DM9000) Test using BSP + HAL
  */
 
+#include "bsp_init.h"
 #include "hal/hal_eth.h"
 #include "hal/hal_uart.h"
-#include "hal/hal_clock.h"
-#include "hal/hal_sdram.h"
 #include <stdint.h>
 #include <string.h>
 
-void hal_system_init(void);
+extern void hal_system_init(void);
 
 static uint8_t tx_payload[64];
 static uint8_t rx_buffer[1536];
 
 int main(void) {
-    /* 1. Low-level Hardware */
 #ifdef TARGET_SDRAM
-    hal_clock_init();
-    hal_sdram_init();
+    bsp_clock_init();
+    bsp_sdram_init();
 #endif
 
-    /* 2. Data Relocation */
     hal_system_init();
 
-    /* 3. Peripheral Initialization */
 #ifndef TARGET_SDRAM
-    hal_clock_init();
+    bsp_clock_init();
 #endif
-    hal_uart_init(115200);
+
+    bsp_uart_init();
     hal_uart_puts("\r\n--- JZ2440 DM9000 Ethernet Test ---\r\n");
 
-    /* Initialize in loopback mode */
-    hal_eth_init_loopback();
+    bsp_eth_init();
     hal_uart_puts("[ETH] DM9000 loopback initialized.\r\n");
 
-    /* Send test packet */
     const char *test_msg = "JZ2440 Ping!";
     uint32_t payload_len = strlen(test_msg) + 1;
     memcpy(tx_payload, test_msg, payload_len);
@@ -55,5 +50,6 @@ int main(void) {
             hal_uart_puts("\r\n");
         }
     }
+
     return 0;
 }
