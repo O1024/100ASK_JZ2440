@@ -39,18 +39,12 @@ static void print_ticks(uint32_t ticks) {
 }
 
 int main(void) {
-#ifdef TARGET_SDRAM
-    bsp_clock_init();
-    bsp_sdram_init();
-#endif
-
+    /* 1. C Runtime */
     hal_system_init();
     g_timer_ticks = 0;
 
-#ifndef TARGET_SDRAM
+    /* 2. Board-level init */
     bsp_clock_init();
-#endif
-
     bsp_uart_init();
     bsp_gpio_init();
 
