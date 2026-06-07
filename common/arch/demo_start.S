@@ -34,10 +34,7 @@ reset_handler:
     msr cpsr_c, #0xd3
     ldr sp, =0x40000f00    /* SVC stack starts below IRQ stack (256 bytes for IRQ) */
 
-    /* 3. Initialize C runtime (copy .data, clear .bss) */
-    bl hal_system_init
-
-    /* 4. Jump to main */
+    /* 3. Jump to main (main() will call hal_system_init at proper time) */
     bl main
 
 halt:

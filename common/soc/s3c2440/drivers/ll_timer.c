@@ -1,12 +1,27 @@
 /**
  * @file s3c2440_timer.c
- * @brief Standard Timer Driver
+ * @brief Standard Timer Driver with Overflow Counting
  */
 
 #include "ll_timer.h"
 #include "ll_irq.h"
 #include "s3c2440_soc.h"
 #include <stdint.h>
+#include <stddef.h>
+
+/* --- Overflow counting for long-duration measurements --- */
+static volatile uint32_t g_timer4_overflows = 0;
+static void (*ll_timer4_user_handler)(void) = NULL;
+
+/**
+ * @brief Internal ISR: counts overflows and chains to user handler.
+ */
+static void ll_timer4_internal_isr(void) {
+    g_timer4_overflows++;
+    if (ll_timer4_user_handler) {
+        ll_timer4_user_handler();
+    }
+}
 
 void ll_timer4_init(uint32_t ms) {
     /* 1. Frequency setup: PCLK (50MHz) / 100 / 16 = 31250 Hz */
@@ -25,11 +40,8 @@ void ll_timer4_init(uint32_t ms) {
     /* 4. Auto Reload setup */
     TIMER->TCON |= (1 << 22);
 
-    /*
-     * S3C2440A 没有 TINT_CSTAT 寄存器。
-     * Timer4 中断使能通过主 INTC (INTMSK) 控制，
-     * 中断状态清除通过 SRCPND/INTPND 完成。
-     */
+    /* 5. Register internal ISR (handles overflow counting + user callback) */
+    ll_irq_register(IRQ_TIMER4, ll_timer4_internal_isr);
 }
 
 void ll_timer4_start(void) {
@@ -43,7 +55,8 @@ void ll_timer4_stop(void) {
 }
 
 void ll_timer4_set_handler(void (*handler)(void)) {
-    ll_irq_register(IRQ_TIMER4, handler);
+    /* Save user callback; internal ISR will call it after counting overflow */
+    ll_timer4_user_handler = handler;
 }
 
 void ll_timer4_init_freerun(void) {
@@ -63,12 +76,18 @@ void ll_timer4_init_freerun(void) {
     /* 4. Auto Reload setup */
     TIMER->TCON |= (1 << 22);
 
-    /*
-     * S3C2440A 没有 TINT_CSTAT 寄存器。
-     * Free-run 模式不启用中断，无需额外清除操作。
-     */
+    /* 5. Register internal ISR for overflow counting */
+    ll_irq_register(IRQ_TIMER4, ll_timer4_internal_isr);
 }
 
 uint16_t ll_timer4_get_ticks(void) {
     return (uint16_t)TIMER->TCNTO4;
+}
+
+void ll_timer4_reset_overflows(void) {
+    g_timer4_overflows = 0;
+}
+
+uint32_t ll_timer4_get_overflows(void) {
+    return g_timer4_overflows;
 }

@@ -49,10 +49,11 @@ int main(void) {
 
     hal_cache_disable_icache();
     hal_uart_puts("Testing with I-Cache OFF... ");
+    hal_timer4_reset_overflows();
     uint16_t start_ticks = hal_timer4_get_ticks();
     benchmark_test();
     uint16_t end_ticks = hal_timer4_get_ticks();
-    uint32_t off_ticks = (start_ticks >= end_ticks) ? (start_ticks - end_ticks) : (0xFFFF - end_ticks + start_ticks + 1);
+    uint32_t off_ticks = hal_timer4_get_elapsed_ticks(start_ticks, end_ticks);
     hal_uart_puts("Done.\r\n");
     hal_uart_puts("Ticks: "); print_dec(off_ticks); hal_uart_puts("\r\n");
 
@@ -60,10 +61,11 @@ int main(void) {
 
     hal_cache_enable_icache();
     hal_uart_puts("Testing with I-Cache ON...  ");
+    hal_timer4_reset_overflows();
     start_ticks = hal_timer4_get_ticks();
     benchmark_test();
     end_ticks = hal_timer4_get_ticks();
-    uint32_t on_ticks = (start_ticks >= end_ticks) ? (start_ticks - end_ticks) : (0xFFFF - end_ticks + start_ticks + 1);
+    uint32_t on_ticks = hal_timer4_get_elapsed_ticks(start_ticks, end_ticks);
     hal_uart_puts("Done.\r\n");
     hal_uart_puts("Ticks: "); print_dec(on_ticks); hal_uart_puts("\r\n");
 

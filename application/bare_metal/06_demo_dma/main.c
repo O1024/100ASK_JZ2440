@@ -65,13 +65,13 @@ int main(void) {
     hal_uart_puts("Done.\r\n");
 
     hal_uart_puts("Starting CPU Copy... ");
+    hal_timer4_reset_overflows();
     uint16_t start_ticks = hal_timer4_get_ticks();
     for (uint32_t i = 0; i < count; i++) {
         dst[i] = src[i];
     }
     uint16_t end_ticks = hal_timer4_get_ticks();
-
-    uint32_t cpu_ticks = (start_ticks >= end_ticks) ? (start_ticks - end_ticks) : (0xFFFF - end_ticks + start_ticks + 1);
+    uint32_t cpu_ticks = hal_timer4_get_elapsed_ticks(start_ticks, end_ticks);
     hal_uart_puts("Done.\r\n");
     hal_uart_puts("CPU Ticks: "); print_dec(cpu_ticks); hal_uart_puts("\r\n");
     if (cpu_ticks > 0) {
@@ -106,12 +106,12 @@ int main(void) {
     hal_dma_config_software(DMA_CH0, &dma_cfg);
 
     hal_uart_puts("Starting DMA Copy... ");
+    hal_timer4_reset_overflows();
     start_ticks = hal_timer4_get_ticks();
     hal_dma_start(DMA_CH0);
     while (hal_dma_is_busy(DMA_CH0));
     end_ticks = hal_timer4_get_ticks();
-
-    uint32_t dma_ticks = (start_ticks >= end_ticks) ? (start_ticks - end_ticks) : (0xFFFF - end_ticks + start_ticks + 1);
+    uint32_t dma_ticks = hal_timer4_get_elapsed_ticks(start_ticks, end_ticks);
     hal_uart_puts("Done.\r\n");
     hal_uart_puts("DMA Ticks: "); print_dec(dma_ticks); hal_uart_puts("\r\n");
     if (dma_ticks > 0) {

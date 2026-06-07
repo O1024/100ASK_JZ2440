@@ -42,4 +42,35 @@ void hal_timer4_init_freerun(void);
  */
 uint16_t hal_timer4_get_ticks(void);
 
+/**
+ * @brief Reset the Timer4 overflow counter to zero.
+ * Call this right before starting a measurement.
+ */
+void hal_timer4_reset_overflows(void);
+
+/**
+ * @brief Get the number of Timer4 overflows since last reset.
+ * @return Overflow count (each overflow = 65536 ticks ≈ 2.097 s)
+ */
+uint32_t hal_timer4_get_overflows(void);
+
+/**
+ * @brief Calculate elapsed ticks between two Timer4 readings.
+ *
+ * This function correctly handles 16-bit counter wrap-around and
+ * accumulated overflows, allowing measurements longer than 2.1 seconds.
+ *
+ * @param start_ticks Value from hal_timer4_get_ticks() at start
+ * @param end_ticks   Value from hal_timer4_get_ticks() at end
+ * @return Total elapsed ticks (32-bit, supports long durations)
+ */
+uint32_t hal_timer4_get_elapsed_ticks(uint16_t start_ticks, uint16_t end_ticks);
+
+/**
+ * @brief Convert ticks to microseconds.
+ * @param ticks Number of timer ticks
+ * @return Approximate time in microseconds (1 tick ≈ 32 us)
+ */
+uint32_t hal_timer4_ticks_to_us(uint32_t ticks);
+
 #endif /* __HAL_TIMER_H__ */
