@@ -129,7 +129,7 @@ $(TARGET).bin: $(TARGET).elf
 $(TARGET).elf: $(OBJS)
 	@echo "  LD      $@ ($(notdir $(LDSCRIPT)), $(BOOT_MEDIA), $(RAM_TARGET)$(if $(EXTRA_RAM),+$(EXTRA_RAM)))"
 	@if [ "$(V)" = "1" ]; then echo "  LDFLAGS: $(LDFLAGS)"; fi
-	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -Wl,-Map=$(TARGET).map -o $@ $^
 
 %.o: %.S
 	@echo "  AS      $<"
@@ -156,7 +156,7 @@ gdb: $(TARGET).elf
 flash: flash_nor
 
 flash_nor: $(TARGET).bin
-	$(Q)openocd -f $(TOP_DIR)/tools/openocd/jz2440.cfg -c "init; halt; flash erase_sector 0 0 last; flash write_image $< 0; reset; exit"
+	$(Q)openocd -f $(TOP_DIR)/tools/openocd/jz2440.cfg -c "init; halt; arm mcr 15 0 1 0 0 0x00000078; flash erase_sector 0 0 last; flash write_image $< 0; reset; exit"
 
 flash_nand: $(TARGET).bin
 	$(Q)openocd -f $(TOP_DIR)/tools/openocd/jz2440.cfg -c "init; halt; nand probe 0; nand erase 0 0 0x80000; nand write 0 $< 0; reset; exit"

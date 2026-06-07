@@ -1,9 +1,13 @@
 /**
  * @file main.c
  * @brief MMU Demo using BSP + HAL
+ *
+ * Demonstrates virtual-to-physical address mapping using the HAL MMU API.
+ * Virtual 0xA0000000 is mapped to Physical 0x30000000 (SDRAM base).
  */
 
 #include "bsp_init.h"
+#include "hal/hal_mmu.h"
 #include "hal/hal_uart.h"
 #include <stdint.h>
 
@@ -30,62 +34,28 @@ static void print_hex(uint32_t val) {
 }
 
 static void mmu_setup_page_table(void) {
+    /*
+     * Section descriptor template (1MB sections):
+     *   Bits[1:0]  = 10  (Section)
+     *   Bit[4]     = 1   (Always 1)
+     *   Bits[11:10]= 11  (AP=3, Full access)
+     */
     const uint32_t section_template = (3U << 10) | (0U << 5) | (0U << 4) | 2U;
 
+    /* Identity map entire 4GB address space */
     for (int i = 0; i < 4096; i++) {
         page_table[i] = ((uint32_t)i << 20) | section_template;
     }
 
+    /* Remap: Virtual 0xA0000000 -> Physical 0x30000000 */
     page_table[0xA00] = (0x300U << 20) | section_template;
-}
-
-static void mmu_enable(void) {
-    uint32_t pt_base = (uint32_t)page_table;
-
-    __asm__ volatile("mov    r0, #0x3\n"
-                     "mcr    p15, 0, r0, c3, c0, 0\n"
-                     "mcr    p15, 0, %0, c2, c0, 0\n"
-                     "mcr    p15, 0, r0, c8, c7, 0\n"
-                     "mcr    p15, 0, r0, c7, c7, 0\n"
-                     "mcr    p15, 0, r0, c7, c10, 4\n"
-                     "mrc    p15, 0, r0, c1, c0, 0\n"
-                     "orr    r0, r0, #0x1\n"
-                     "orr    r0, r0, #0x4\n"
-                     "orr    r0, r0, #0x8\n"
-                     "orr    r0, r0, #0x1000\n"
-                     "mcr    p15, 0, r0, c1, c0, 0\n"
-                     "nop\n"
-                     "nop\n"
-                     "nop\n"
-                     "nop\n"
-                     "nop\n"
-                     :
-                     : "r"(pt_base)
-                     : "r0");
-}
-
-static void mmu_disable(void) {
-    __asm__ volatile("mrc    p15, 0, r0, c1, c0, 0\n"
-                     "bic    r0, r0, #0x1\n"
-                     "bic    r0, r0, #0x4\n"
-                     "bic    r0, r0, #0x8\n"
-                     "bic    r0, r0, #0x1000\n"
-                     "mcr    p15, 0, r0, c1, c0, 0\n"
-                     "nop\n"
-                     "nop\n"
-                     "nop\n"
-                     "nop\n"
-                     "nop\n"
-                     :
-                     :
-                     : "r0");
 }
 
 int main(void) {
     bsp_init();
     hal_system_init();
 
-    BSP_PRINT_BANNER("07 MMU Demo");
+    BSP_PRINT_BANNER("07 MMU Demo (using HAL API)");
     hal_uart_puts("Mode   : Running from NOR/ISRAM\r\n");
     hal_uart_puts("Target : Virtual 0xA0000000 -> Physical 0x30000000\r\n");
 
@@ -97,8 +67,8 @@ int main(void) {
     hal_uart_puts("\r\n");
 
     mmu_setup_page_table();
-    hal_uart_puts("Enabling MMU...\r\n");
-    mmu_enable();
+    hal_uart_puts("Enabling MMU via HAL...\r\n");
+    hal_mmu_enable(PAGE_TABLE_BASE);
 
     volatile uint32_t *p_virt = (volatile uint32_t *)0xA0000000;
     uint32_t           val = *p_virt;
@@ -113,8 +83,11 @@ int main(void) {
         hal_uart_puts("MMU mapping test: FAILED\r\n");
     }
 
-    mmu_disable();
-    hal_uart_puts("MMU disabled.\r\n");
+    hal_uart_puts("MMU status: ");
+    hal_uart_puts(hal_mmu_is_enabled() ? "Enabled\r\n" : "Disabled\r\n");
+
+    hal_mmu_disable();
+    hal_uart_puts("MMU disabled via HAL.\r\n");
     hal_uart_puts("========================================\r\n");
 
     while (1)

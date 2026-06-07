@@ -22,4 +22,20 @@ void hal_cache_disable_icache(void);
  */
 int hal_cache_is_icache_enabled(void);
 
+/**
+ * @brief Enable Data Cache (D-Cache)
+ */
+void hal_cache_enable_dcache(void);
+
+/**
+ * @brief Disable Data Cache (D-Cache)
+ */
+void hal_cache_disable_dcache(void);
+
+/**
+ * @brief Check if Data Cache is enabled
+ * @return 1 if enabled, 0 if disabled
+ */
+int hal_cache_is_dcache_enabled(void);
+
 #endif /* __HAL_CACHE_H__ */

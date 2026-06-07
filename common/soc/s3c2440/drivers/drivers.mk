@@ -18,6 +18,7 @@ SRCS += $(DRV_DIR)/ll_timer.c
 SRCS += $(DRV_DIR)/ll_delay.c
 SRCS += $(DRV_DIR)/ll_dma.c
 SRCS += $(DRV_DIR)/ll_cache.c
+SRCS += $(DRV_DIR)/ll_mmu.c
 
 SRCS += $(HAL_DIR)/hal_uart.c
 SRCS += $(HAL_DIR)/hal_clock.c
@@ -31,3 +32,4 @@ SRCS += $(HAL_DIR)/hal_eth.c
 SRCS += $(HAL_DIR)/hal_irq.c
 SRCS += $(HAL_DIR)/hal_delay.c
 SRCS += $(HAL_DIR)/hal_cache.c
+SRCS += $(HAL_DIR)/hal_mmu.c
