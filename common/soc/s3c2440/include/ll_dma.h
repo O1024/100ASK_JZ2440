@@ -13,7 +13,7 @@ typedef struct {
     uint32_t dst_addr_mode;
 
     uint32_t data_size;
-    uint32_t trans_type;    /* 0=unit, 1=burst4 */
+    uint32_t trans_type; /* 0=unit, 1=burst4 */
     uint32_t transfer_count;
 } ll_dma_config_t;
 

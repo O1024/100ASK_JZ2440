@@ -6,8 +6,8 @@
  */
 
 #include "hal/hal_uart.h"
-#include "ll_uart.h"
 #include "ll_timer.h"
+#include "ll_uart.h"
 
 void hal_uart_init(uint32_t baud_rate) {
     ll_uart_init(baud_rate);
@@ -22,7 +22,8 @@ char hal_uart_getc(void) {
 }
 
 void hal_uart_puts(const char *str) {
-    if (!str) return;
+    if (!str)
+        return;
     while (*str) {
         if (*str == '\n') {
             ll_uart_putc('\r');

@@ -4,11 +4,11 @@
  */
 
 #include "bsp_init.h"
-#include "hal/hal_uart.h"
-#include "hal/hal_nand.h"
-#include "hal/hal_gpio.h"
-#include "hal/hal_timer.h"
 #include "hal/hal_delay.h"
+#include "hal/hal_gpio.h"
+#include "hal/hal_nand.h"
+#include "hal/hal_timer.h"
+#include "hal/hal_uart.h"
 #include "lib/ymodem.h"
 #include <stdint.h>
 
@@ -16,11 +16,11 @@
 #define APP_NAND_OFFSET 0x40000
 #define APP_COPY_SIZE   (512 * 1024)
 
-#define BOOT_LED        BSP_LED1
+#define BOOT_LED BSP_LED1
 
 extern void hal_system_init(void);
 
-static uint8_t nand_page_buf[NAND_PAGE_SIZE];
+static uint8_t  nand_page_buf[NAND_PAGE_SIZE];
 static uint32_t nand_buf_len = 0;
 static uint32_t nand_block = 0;
 static uint32_t nand_page = 0;
@@ -28,7 +28,7 @@ static uint32_t nand_page = 0;
 static void nand_write_init(void) {
     nand_buf_len = 0;
     nand_block = APP_NAND_OFFSET / NAND_BLOCK_SIZE;
-    nand_page  = (APP_NAND_OFFSET % NAND_BLOCK_SIZE) / NAND_PAGE_SIZE;
+    nand_page = (APP_NAND_OFFSET % NAND_BLOCK_SIZE) / NAND_PAGE_SIZE;
 }
 
 static int nand_flush_page(void) {
@@ -68,7 +68,7 @@ static int ymodem_nand_write_cb(uint32_t offset, const uint8_t *data, uint32_t l
 
 static int ymodem_nand_start_cb(uint32_t file_size) {
     uint32_t start_block = APP_NAND_OFFSET / NAND_BLOCK_SIZE;
-    uint32_t num_blocks  = (file_size + NAND_BLOCK_SIZE - 1) / NAND_BLOCK_SIZE;
+    uint32_t num_blocks = (file_size + NAND_BLOCK_SIZE - 1) / NAND_BLOCK_SIZE;
 
     hal_uart_puts("[Boot] Erasing ");
     hal_uart_putc('0' + (num_blocks / 100) % 10);
@@ -100,14 +100,16 @@ static void do_update(void) {
 
     hal_uart_wait_tx_done();
     hal_uart_flush();
-    hal_uart_puts("[Boot] Prepare minicom YModem sender now (Ctrl+A, S, select YModem, pick file).\r\n");
+    hal_uart_puts(
+        "[Boot] Prepare minicom YModem sender now (Ctrl+A, S, select YModem, pick file).\r\n");
     hal_uart_puts("[Boot] Starting YModem receiver...\r\n");
     hal_uart_wait_tx_done();
 
-    int last_error = 0;
-    uint8_t last_seq = 0;
+    int      last_error = 0;
+    uint8_t  last_seq = 0;
     uint32_t file_size = 0;
-    result = ymodem_receive_ex(ymodem_nand_write_cb, ymodem_nand_start_cb, &last_error, &last_seq, &file_size);
+    result = ymodem_receive_ex(
+        ymodem_nand_write_cb, ymodem_nand_start_cb, &last_error, &last_seq, &file_size);
 
     if (result == YMODEM_OK) {
         if (nand_flush_page() != 0) {
@@ -125,11 +127,21 @@ static void do_update(void) {
         hal_uart_puts("[Boot] Update failed!\r\n");
         hal_uart_puts("[Boot] Error detail: ");
         switch (last_error) {
-            case YMODEM_ERR_BAD_HEADER: hal_uart_puts("BAD_HEADER\r\n"); break;
-            case YMODEM_ERR_TIMEOUT:    hal_uart_puts("TIMEOUT\r\n"); break;
-            case YMODEM_ERR_SEQ:        hal_uart_puts("SEQ mismatch\r\n"); break;
-            case YMODEM_ERR_CRC:        hal_uart_puts("CRC mismatch\r\n"); break;
-            default:                    hal_uart_puts("Unknown\r\n"); break;
+            case YMODEM_ERR_BAD_HEADER:
+                hal_uart_puts("BAD_HEADER\r\n");
+                break;
+            case YMODEM_ERR_TIMEOUT:
+                hal_uart_puts("TIMEOUT\r\n");
+                break;
+            case YMODEM_ERR_SEQ:
+                hal_uart_puts("SEQ mismatch\r\n");
+                break;
+            case YMODEM_ERR_CRC:
+                hal_uart_puts("CRC mismatch\r\n");
+                break;
+            default:
+                hal_uart_puts("Unknown\r\n");
+                break;
         }
         hal_uart_puts("[Boot] Last seq: ");
         hal_uart_putc("0123456789ABCDEF"[(last_seq >> 4) & 0xF]);
@@ -150,15 +162,14 @@ static void do_update(void) {
         reset();
     } else {
         hal_uart_puts("[Boot] Please reset the board.\r\n");
-        while (1);
+        while (1)
+            ;
     }
 }
 
 static void __attribute__((naked)) switch_to_sdram_stack(void) {
-    __asm__ volatile (
-        "ldr sp, =0x34000000\n"
-        "bx lr\n"
-    );
+    __asm__ volatile("ldr sp, =0x34000000\n"
+                     "bx lr\n");
 }
 
 static int load_app_from_nand(void) {
@@ -208,7 +219,8 @@ int main(void) {
             }
             hal_delay(10000);
         }
-        if (update) break;
+        if (update)
+            break;
     }
     hal_uart_puts("\r\n");
 
@@ -218,7 +230,8 @@ int main(void) {
 
     if (load_app_from_nand() != 0) {
         hal_uart_puts("[Boot] System Halted.\r\n");
-        while(1);
+        while (1)
+            ;
     }
 
     hal_uart_puts("[Boot] Jumping to Application at 0x30000000...\r\n");
@@ -230,5 +243,6 @@ int main(void) {
     void (*app_start)(void) = (void (*)(void))APP_SDRAM_ENTRY;
     app_start();
 
-    while(1);
+    while (1)
+        ;
 }

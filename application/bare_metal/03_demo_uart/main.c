@@ -4,13 +4,13 @@
  */
 
 #include "bsp_init.h"
-#include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
+#include "hal/hal_uart.h"
 #include <stdint.h>
 
 extern void hal_system_init(void);
 
-#define HEARTBEAT_LED   BSP_LED1
+#define HEARTBEAT_LED BSP_LED1
 
 static void uart_echo_loop(void) {
     while (1) {

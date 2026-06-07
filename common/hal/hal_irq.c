@@ -23,6 +23,7 @@ void hal_irq_global_disable(void) {
 
 void hal_irq_register(int irq_num, void (*handler)(void)) {
     /* Generic: boundary check + table assignment */
-    if (irq_num > 31) return;
+    if (irq_num > 31)
+        return;
     ll_irq_register(irq_num, handler);
 }

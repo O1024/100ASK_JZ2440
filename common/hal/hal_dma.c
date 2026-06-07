@@ -10,7 +10,8 @@ void hal_dma_config_software(hal_dma_channel_t ch, hal_dma_config_t *cfg) {
     ll_cfg.dst_bus = cfg->dst_bus;
     ll_cfg.dst_addr_mode = cfg->dst_addr_mode;
     ll_cfg.data_size = cfg->data_size;
-    ll_cfg.trans_type = (cfg->trans_type == DMA_TRANS_BURST4) ? LL_DMA_TRANS_BURST4 : LL_DMA_TRANS_UNIT;
+    ll_cfg.trans_type =
+        (cfg->trans_type == DMA_TRANS_BURST4) ? LL_DMA_TRANS_BURST4 : LL_DMA_TRANS_UNIT;
     ll_cfg.transfer_count = cfg->transfer_count;
     ll_dma_config_software(ch, &ll_cfg);
 }

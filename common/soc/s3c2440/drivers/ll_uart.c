@@ -10,20 +10,20 @@
 #include "s3c2440_soc.h"
 
 /* --- UART Register Bit Definitions --- */
-#define UTRSTAT_TX_EMPTY    (1 << 2)
-#define UTRSTAT_RX_READY    (1 << 0)
-#define UFCON_FIFO_ENABLE   (1 << 0)
-#define UFCON_TX_RESET      (1 << 2)
-#define UFCON_RX_RESET      (1 << 1)
-#define UFSTAT_TX_FULL      (1 << 14)
-#define UFSTAT_RX_FULL      (1 << 6)
-#define UFSTAT_RX_COUNT     (0x3F)
+#define UTRSTAT_TX_EMPTY  (1 << 2)
+#define UTRSTAT_RX_READY  (1 << 0)
+#define UFCON_FIFO_ENABLE (1 << 0)
+#define UFCON_TX_RESET    (1 << 2)
+#define UFCON_RX_RESET    (1 << 1)
+#define UFSTAT_TX_FULL    (1 << 14)
+#define UFSTAT_RX_FULL    (1 << 6)
+#define UFSTAT_RX_COUNT   (0x3F)
 
 void ll_uart_init(uint32_t baud_rate) {
     /* 1. Configure GPIO: GPH2 -> TXD0, GPH3 -> RXD0 */
     gpio_port_t *port_h = GPIO_PORT(PORT_H);
     port_h->CON &= ~((3 << 4) | (3 << 6));
-    port_h->CON |=  ((2 << 4) | (2 << 6));
+    port_h->CON |= ((2 << 4) | (2 << 6));
     port_h->UP &= ~((1 << 2) | (1 << 3));
 
     /* 2. Format: 8 Bits, No Parity, 1 Stop Bit (8N1) */
@@ -41,12 +41,14 @@ void ll_uart_init(uint32_t baud_rate) {
 }
 
 void ll_uart_putc(char c) {
-    while (UART0->UFSTAT & UFSTAT_TX_FULL);
+    while (UART0->UFSTAT & UFSTAT_TX_FULL)
+        ;
     UART0->UTXH = (uint8_t)c;
 }
 
 char ll_uart_getc(void) {
-    while ((UART0->UFSTAT & (UFSTAT_RX_COUNT | UFSTAT_RX_FULL)) == 0);
+    while ((UART0->UFSTAT & (UFSTAT_RX_COUNT | UFSTAT_RX_FULL)) == 0)
+        ;
     return (char)UART0->URXH;
 }
 
@@ -59,5 +61,6 @@ void ll_uart_flush(void) {
 }
 
 void ll_uart_wait_tx_done(void) {
-    while (!(UART0->UTRSTAT & UTRSTAT_TX_EMPTY));
+    while (!(UART0->UTRSTAT & UTRSTAT_TX_EMPTY))
+        ;
 }

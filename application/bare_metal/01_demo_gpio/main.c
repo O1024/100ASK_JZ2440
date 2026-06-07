@@ -6,8 +6,8 @@
 #include "bsp_init.h"
 #include "hal/hal_delay.h"
 #include "hal/hal_gpio.h"
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 

@@ -9,13 +9,13 @@
 
 extern void hal_system_init(void);
 
-#define PAGE_TABLE_BASE  0x30004000U
-static uint32_t * const page_table = (uint32_t *)PAGE_TABLE_BASE;
+#define PAGE_TABLE_BASE 0x30004000U
+static uint32_t *const page_table = (uint32_t *)PAGE_TABLE_BASE;
 
 static void print_hex(uint32_t val) {
     const char *hex = "0123456789ABCDEF";
-    char buf[11];
-    int i = 10;
+    char        buf[11];
+    int         i = 10;
     buf[i] = '\0';
     if (val == 0) {
         buf[--i] = '0';
@@ -42,47 +42,43 @@ static void mmu_setup_page_table(void) {
 static void mmu_enable(void) {
     uint32_t pt_base = (uint32_t)page_table;
 
-    __asm__ volatile (
-        "mov    r0, #0x3\n"
-        "mcr    p15, 0, r0, c3, c0, 0\n"
-        "mcr    p15, 0, %0, c2, c0, 0\n"
-        "mcr    p15, 0, r0, c8, c7, 0\n"
-        "mcr    p15, 0, r0, c7, c7, 0\n"
-        "mcr    p15, 0, r0, c7, c10, 4\n"
-        "mrc    p15, 0, r0, c1, c0, 0\n"
-        "orr    r0, r0, #0x1\n"
-        "orr    r0, r0, #0x4\n"
-        "orr    r0, r0, #0x8\n"
-        "orr    r0, r0, #0x1000\n"
-        "mcr    p15, 0, r0, c1, c0, 0\n"
-        "nop\n"
-        "nop\n"
-        "nop\n"
-        "nop\n"
-        "nop\n"
-        :
-        : "r"(pt_base)
-        : "r0"
-    );
+    __asm__ volatile("mov    r0, #0x3\n"
+                     "mcr    p15, 0, r0, c3, c0, 0\n"
+                     "mcr    p15, 0, %0, c2, c0, 0\n"
+                     "mcr    p15, 0, r0, c8, c7, 0\n"
+                     "mcr    p15, 0, r0, c7, c7, 0\n"
+                     "mcr    p15, 0, r0, c7, c10, 4\n"
+                     "mrc    p15, 0, r0, c1, c0, 0\n"
+                     "orr    r0, r0, #0x1\n"
+                     "orr    r0, r0, #0x4\n"
+                     "orr    r0, r0, #0x8\n"
+                     "orr    r0, r0, #0x1000\n"
+                     "mcr    p15, 0, r0, c1, c0, 0\n"
+                     "nop\n"
+                     "nop\n"
+                     "nop\n"
+                     "nop\n"
+                     "nop\n"
+                     :
+                     : "r"(pt_base)
+                     : "r0");
 }
 
 static void mmu_disable(void) {
-    __asm__ volatile (
-        "mrc    p15, 0, r0, c1, c0, 0\n"
-        "bic    r0, r0, #0x1\n"
-        "bic    r0, r0, #0x4\n"
-        "bic    r0, r0, #0x8\n"
-        "bic    r0, r0, #0x1000\n"
-        "mcr    p15, 0, r0, c1, c0, 0\n"
-        "nop\n"
-        "nop\n"
-        "nop\n"
-        "nop\n"
-        "nop\n"
-        :
-        :
-        : "r0"
-    );
+    __asm__ volatile("mrc    p15, 0, r0, c1, c0, 0\n"
+                     "bic    r0, r0, #0x1\n"
+                     "bic    r0, r0, #0x4\n"
+                     "bic    r0, r0, #0x8\n"
+                     "bic    r0, r0, #0x1000\n"
+                     "mcr    p15, 0, r0, c1, c0, 0\n"
+                     "nop\n"
+                     "nop\n"
+                     "nop\n"
+                     "nop\n"
+                     "nop\n"
+                     :
+                     :
+                     : "r0");
 }
 
 int main(void) {
@@ -105,7 +101,7 @@ int main(void) {
     mmu_enable();
 
     volatile uint32_t *p_virt = (volatile uint32_t *)0xA0000000;
-    uint32_t val = *p_virt;
+    uint32_t           val = *p_virt;
 
     hal_uart_puts("Read via virtual addr 0xA0000000: ");
     print_hex(val);
@@ -121,6 +117,7 @@ int main(void) {
     hal_uart_puts("MMU disabled.\r\n");
     hal_uart_puts("========================================\r\n");
 
-    while (1);
+    while (1)
+        ;
     return 0;
 }

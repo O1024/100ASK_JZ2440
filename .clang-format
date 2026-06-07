@@ -1,0 +1,114 @@
+# .clang-format for JZ2440 Unified SDK
+# Based on LLVM style with customizations matching the codebase
+
+---
+Language: C
+BasedOnStyle: LLVM
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+
+# Braces
+BreakBeforeBraces: Attach
+# Opening braces on same line (K&R style)
+# void func() {
+#     if (cond) {
+#     }
+# }
+
+# Pointer alignment
+PointerAlignment: Right
+# void *ptr;  (space before asterisk)
+# NOT: void* ptr;
+
+# Function declarations/definitions
+AllowShortFunctionsOnASingleLine: None
+# Don't allow short functions on single line
+# void foo() { return; }  -> NOT allowed
+
+# Indentation for control structures
+IndentCaseLabels: true
+# switch (x) {
+#     case 1:
+#         break;
+# }
+
+# Comments
+AlignTrailingComments: true
+ReflowComments: true
+# Preserve Doxygen-style comments
+CommentPragmas: '^\\s*\\*\\s*@'
+
+# Preprocessor directives
+IndentPPDirectives: None
+# #include and #define are not indented
+
+# Arrays and structs
+AlignArrayOfStructures: Left
+# struct { int a; int b; } arr[] = {
+#     {1, 2},
+#     {3, 4},
+# };
+
+# Function call alignment
+AlignOperands: Align
+# Align operands in expressions
+
+# Line breaks
+AllowAllArgumentsOnNextLine: true
+BinPackArguments: false
+BinPackParameters: false
+# Prefer each argument on its own line if it doesn't fit
+
+# Spaces
+SpaceAfterCStyleCast: false
+# (int)var  NOT  (int) var
+SpaceBeforeAssignmentOperators: true
+# a = b;
+SpaceBeforeParens: ControlStatements
+# if (cond)  NOT  if(cond)
+# func()  NOT  func ()
+
+# For loops and while
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterFunctionDeclarationName: false
+  AfterFunctionDefinitionName: false
+
+# Empty lines
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# Macros
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+
+# typedef alignment
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+
+# Sort includes
+SortIncludes: true
+IncludeBlocks: Preserve
+# Keep include blocks as-is
+
+# Penalties - prefer certain formatting
+PenaltyBreakBeforeFirstCallParameter: 19
+PenaltyBreakComment: 300
+PenaltyBreakString: 1000
+PenaltyExcessCharacter: 1000000
+
+# Other
+BreakStringLiterals: true
+# Break long strings if needed
+AllowShortBlocksOnASingleLine: false
+# Don't allow { return; } style
+
+---

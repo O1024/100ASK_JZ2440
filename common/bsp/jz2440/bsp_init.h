@@ -14,36 +14,36 @@
 #include <stdint.h>
 
 /* --- 板级 UART 配置 --- */
-#define BSP_UART_BAUD_RATE      115200
+#define BSP_UART_BAUD_RATE 115200
 
 /* --- 板载 LED GPIO --- */
-#define BSP_LED1                GPF4
-#define BSP_LED2                GPF5
-#define BSP_LED3                GPF6
+#define BSP_LED1 GPF4
+#define BSP_LED2 GPF5
+#define BSP_LED3 GPF6
 
 /* --- 板载按键 GPIO --- */
-#define BSP_KEY1                GPF0
-#define BSP_KEY2                GPF2
-#define BSP_KEY3                GPG3
+#define BSP_KEY1 GPF0
+#define BSP_KEY2 GPF2
+#define BSP_KEY3 GPG3
 
 /* --- SDRAM 配置 --- */
-#define BSP_SDRAM_SIZE          (64 * 1024 * 1024)  /* 64MB */
-#define BSP_SDRAM_BASE          0x30000000
+#define BSP_SDRAM_SIZE (64 * 1024 * 1024) /* 64MB */
+#define BSP_SDRAM_BASE 0x30000000
 
 /* --- LCD 配置 --- */
-#define BSP_LCD_WIDTH           480
-#define BSP_LCD_HEIGHT          272
-#define BSP_LCD_BPP             16
-#define BSP_LCD_FB_ADDR         0x33800000
+#define BSP_LCD_WIDTH   480
+#define BSP_LCD_HEIGHT  272
+#define BSP_LCD_BPP     16
+#define BSP_LCD_FB_ADDR 0x33800000
 
 /* --- NAND 配置 --- */
-#define BSP_NAND_PAGE_SIZE      2048
+#define BSP_NAND_PAGE_SIZE       2048
 #define BSP_NAND_PAGES_PER_BLOCK 64
-#define BSP_NAND_BLOCK_SIZE     (BSP_NAND_PAGE_SIZE * BSP_NAND_PAGES_PER_BLOCK)
-#define BSP_NAND_TOTAL_SIZE     (256 * 1024 * 1024) /* 256MB */
+#define BSP_NAND_BLOCK_SIZE      (BSP_NAND_PAGE_SIZE * BSP_NAND_PAGES_PER_BLOCK)
+#define BSP_NAND_TOTAL_SIZE      (256 * 1024 * 1024) /* 256MB */
 
 /* --- 以太网配置 --- */
-#define BSP_DM9000_BASE         0x20000000
+#define BSP_DM9000_BASE 0x20000000
 
 /**
  * @brief 板级总初始化
@@ -68,7 +68,7 @@ void bsp_print_mhz(uint32_t hz);
 /**
  * @brief 便捷的横幅打印宏，自动捕获 __DATE__ / __TIME__
  */
-#define BSP_PRINT_BANNER(name)  bsp_print_banner_ex((name), __DATE__, __TIME__)
+#define BSP_PRINT_BANNER(name) bsp_print_banner_ex((name), __DATE__, __TIME__)
 
 /**
  * @brief 初始化系统时钟

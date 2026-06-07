@@ -8,12 +8,12 @@
 
 #include "bsp_init.h"
 #include "hal/hal_clock.h"
-#include "hal/hal_uart.h"
-#include "hal/hal_gpio.h"
-#include "hal/hal_sdram.h"
-#include "hal/hal_nand.h"
-#include "hal/hal_lcd.h"
 #include "hal/hal_eth.h"
+#include "hal/hal_gpio.h"
+#include "hal/hal_lcd.h"
+#include "hal/hal_nand.h"
+#include "hal/hal_sdram.h"
+#include "hal/hal_uart.h"
 
 /**
  * @brief 板级总初始化
@@ -119,7 +119,7 @@ void bsp_print_mhz(uint32_t hz) {
     uint32_t mhz_frac = (hz / 100000) % 10;
 
     char buf[12];
-    int i = 11;
+    int  i = 11;
     buf[i] = '\0';
 
     /* Fractional part */
@@ -147,12 +147,23 @@ void bsp_print_banner_ex(const char *app_name, const char *build_date, const cha
     hal_uart_puts("========================================\r\n");
     hal_uart_puts("       JZ2440 Unified SDK\r\n");
     hal_uart_puts("========================================\r\n");
-    hal_uart_puts("  Application : "); hal_uart_puts(app_name); hal_uart_puts("\r\n");
-    hal_uart_puts("  Build Time  : "); hal_uart_puts(build_date);
-    hal_uart_puts(" "); hal_uart_puts(build_time); hal_uart_puts("\r\n");
-    hal_uart_puts("  FCLK        : "); bsp_print_mhz(hal_clock_get_fclk()); hal_uart_puts(" MHz\r\n");
-    hal_uart_puts("  HCLK        : "); bsp_print_mhz(hal_clock_get_hclk()); hal_uart_puts(" MHz\r\n");
-    hal_uart_puts("  PCLK        : "); bsp_print_mhz(hal_clock_get_pclk()); hal_uart_puts(" MHz\r\n");
+    hal_uart_puts("  Application : ");
+    hal_uart_puts(app_name);
+    hal_uart_puts("\r\n");
+    hal_uart_puts("  Build Time  : ");
+    hal_uart_puts(build_date);
+    hal_uart_puts(" ");
+    hal_uart_puts(build_time);
+    hal_uart_puts("\r\n");
+    hal_uart_puts("  FCLK        : ");
+    bsp_print_mhz(hal_clock_get_fclk());
+    hal_uart_puts(" MHz\r\n");
+    hal_uart_puts("  HCLK        : ");
+    bsp_print_mhz(hal_clock_get_hclk());
+    hal_uart_puts(" MHz\r\n");
+    hal_uart_puts("  PCLK        : ");
+    bsp_print_mhz(hal_clock_get_pclk());
+    hal_uart_puts(" MHz\r\n");
     hal_uart_puts("----------------------------------------\r\n");
 }
 

@@ -9,24 +9,24 @@
 #include <stdint.h>
 
 /* --- Display Geometry (4.3 inch TFT) --- */
-#define LCD_WIDTH           480
-#define LCD_HEIGHT          272
-#define LCD_BPP             16
+#define LCD_WIDTH  480
+#define LCD_HEIGHT 272
+#define LCD_BPP    16
 
 /* --- Memory Buffer --- */
 /* FrameBuffer Address (Top of 64MB SDRAM) */
-#define LCD_FB_BASE         0x33800000 
+#define LCD_FB_BASE 0x33800000
 
 /* --- Professional Color Type --- */
 typedef uint16_t hal_lcd_color_t;
 
 /* Standard RGB565 Colors */
-#define COLOR_RED           0xF800
-#define COLOR_GREEN         0x07E0
-#define COLOR_BLUE          0x001F
-#define COLOR_WHITE         0xFFFF
-#define COLOR_BLACK         0x0000
-#define COLOR_YELLOW        0xFFE0
+#define COLOR_RED    0xF800
+#define COLOR_GREEN  0x07E0
+#define COLOR_BLUE   0x001F
+#define COLOR_WHITE  0xFFFF
+#define COLOR_BLACK  0x0000
+#define COLOR_YELLOW 0xFFE0
 
 /* --- Core API --- */
 void hal_lcd_init(void);

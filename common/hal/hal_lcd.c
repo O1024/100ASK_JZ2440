@@ -24,7 +24,8 @@ void hal_lcd_clear(uint16_t color) {
 }
 
 void hal_lcd_draw_pixel(int x, int y, uint16_t color) {
-    if (x < 0 || x >= LCD_WIDTH || y < 0 || y >= LCD_HEIGHT) return;
+    if (x < 0 || x >= LCD_WIDTH || y < 0 || y >= LCD_HEIGHT)
+        return;
     uint16_t *fb = (uint16_t *)LCD_FB_BASE;
     fb[y * LCD_WIDTH + x] = color;
 }

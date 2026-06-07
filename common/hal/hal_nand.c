@@ -42,7 +42,9 @@ int hal_nand_read(uint8_t *dest, uint32_t src_offset, uint32_t size) {
     uint32_t current_size = 0;
 
     while (current_size < size) {
-        if (ll_nand_read_page(page_idx / NAND_PAGES_PER_BLOCK, page_idx % NAND_PAGES_PER_BLOCK, dest + current_size) != 0) {
+        if (ll_nand_read_page(page_idx / NAND_PAGES_PER_BLOCK,
+                              page_idx % NAND_PAGES_PER_BLOCK,
+                              dest + current_size) != 0) {
             return -1;
         }
         current_size += NAND_PAGE_SIZE;
@@ -56,7 +58,9 @@ int hal_nand_write(const uint8_t *src, uint32_t dest_offset, uint32_t size) {
     uint32_t current_size = 0;
 
     while (current_size < size) {
-        if (ll_nand_write_page(page_idx / NAND_PAGES_PER_BLOCK, page_idx % NAND_PAGES_PER_BLOCK, src + current_size) != 0) {
+        if (ll_nand_write_page(page_idx / NAND_PAGES_PER_BLOCK,
+                               page_idx % NAND_PAGES_PER_BLOCK,
+                               src + current_size) != 0) {
             return -1;
         }
         current_size += NAND_PAGE_SIZE;

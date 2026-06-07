@@ -14,7 +14,7 @@ uint16_t ll_timer4_get_ticks(void);
  * @brief Reset the Timer4 overflow counter to zero.
  * Call this right before starting a measurement.
  */
-void     ll_timer4_reset_overflows(void);
+void ll_timer4_reset_overflows(void);
 
 /**
  * @brief Get the number of Timer4 overflows since reset.

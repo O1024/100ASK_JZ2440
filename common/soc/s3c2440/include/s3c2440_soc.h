@@ -8,28 +8,28 @@
 
 #include <stdint.h>
 
-#define MEM_CTL_BASE    0x48000000
-#define INTC_BASE       0x4A000000
-#define CLK_PWR_BASE    0x4C000000
-#define LCD_CTL_BASE    0x4D000000
-#define NAND_CTL_BASE   0x4E000000
-#define UART_BASE       0x50000000
-#define TIMER_BASE      0x51000000
-#define WDT_BASE        0x53000000
-#define GPIO_BASE       0x56000000
-#define DMA_BASE        0x4B000000
+#define MEM_CTL_BASE  0x48000000
+#define INTC_BASE     0x4A000000
+#define CLK_PWR_BASE  0x4C000000
+#define LCD_CTL_BASE  0x4D000000
+#define NAND_CTL_BASE 0x4E000000
+#define UART_BASE     0x50000000
+#define TIMER_BASE    0x51000000
+#define WDT_BASE      0x53000000
+#define GPIO_BASE     0x56000000
+#define DMA_BASE      0x4B000000
 
 typedef struct {
-    volatile uint32_t DISRC;      // Initial source address
-    volatile uint32_t DISRCC;     // Initial source control
-    volatile uint32_t DIDST;      // Initial destination address
-    volatile uint32_t DIDSTC;     // Initial destination control
-    volatile uint32_t DCON;       // DMA control
-    volatile uint32_t DSTAT;      // DMA status
-    volatile uint32_t DCSRC;      // Current source address
-    volatile uint32_t DCDST;      // Current destination address
-    volatile uint32_t DMASKTRIG;  // Mask and trigger
-    volatile uint32_t _pad[7];    // Padding to 64 bytes (16 words total)
+    volatile uint32_t DISRC;     // Initial source address
+    volatile uint32_t DISRCC;    // Initial source control
+    volatile uint32_t DIDST;     // Initial destination address
+    volatile uint32_t DIDSTC;    // Initial destination control
+    volatile uint32_t DCON;      // DMA control
+    volatile uint32_t DSTAT;     // DMA status
+    volatile uint32_t DCSRC;     // Current source address
+    volatile uint32_t DCDST;     // Current destination address
+    volatile uint32_t DMASKTRIG; // Mask and trigger
+    volatile uint32_t _pad[7];   // Padding to 64 bytes (16 words total)
 } dma_ch_t;
 
 typedef struct {
@@ -48,23 +48,23 @@ typedef struct {
 } intc_t;
 
 typedef struct {
-    volatile uint32_t TCFG0;    /* 0x00 */
-    volatile uint32_t TCFG1;    /* 0x04 */
-    volatile uint32_t TCON;     /* 0x08 */
-    volatile uint32_t TCNTB0;   /* 0x0C */
-    volatile uint32_t TCMPB0;   /* 0x10 */
-    volatile uint32_t TCNTO0;   /* 0x14 */
-    volatile uint32_t TCNTB1;   /* 0x18 */
-    volatile uint32_t TCMPB1;   /* 0x1C */
-    volatile uint32_t TCNTO1;   /* 0x20 */
-    volatile uint32_t TCNTB2;   /* 0x24 */
-    volatile uint32_t TCMPB2;   /* 0x28 */
-    volatile uint32_t TCNTO2;   /* 0x2C */
-    volatile uint32_t TCNTB3;   /* 0x30 */
-    volatile uint32_t TCMPB3;   /* 0x34 */
-    volatile uint32_t TCNTO3;   /* 0x38 */
-    volatile uint32_t TCNTB4;   /* 0x3C - Correct! */
-    volatile uint32_t TCNTO4;   /* 0x40 */
+    volatile uint32_t TCFG0;  /* 0x00 */
+    volatile uint32_t TCFG1;  /* 0x04 */
+    volatile uint32_t TCON;   /* 0x08 */
+    volatile uint32_t TCNTB0; /* 0x0C */
+    volatile uint32_t TCMPB0; /* 0x10 */
+    volatile uint32_t TCNTO0; /* 0x14 */
+    volatile uint32_t TCNTB1; /* 0x18 */
+    volatile uint32_t TCMPB1; /* 0x1C */
+    volatile uint32_t TCNTO1; /* 0x20 */
+    volatile uint32_t TCNTB2; /* 0x24 */
+    volatile uint32_t TCMPB2; /* 0x28 */
+    volatile uint32_t TCNTO2; /* 0x2C */
+    volatile uint32_t TCNTB3; /* 0x30 */
+    volatile uint32_t TCMPB3; /* 0x34 */
+    volatile uint32_t TCNTO3; /* 0x38 */
+    volatile uint32_t TCNTB4; /* 0x3C - Correct! */
+    volatile uint32_t TCNTO4; /* 0x40 */
 } timer_ctl_t;
 
 typedef struct {
@@ -99,12 +99,12 @@ typedef struct {
     volatile uint32_t GREENLUT;
     volatile uint32_t BLUELUT;
     volatile uint32_t _pad0[8];
-    volatile uint32_t DITHMODE;    /* 0x4C */
-    volatile uint32_t TPAL;        /* 0x50 */
-    volatile uint32_t LCDINTPND;   /* 0x54 */
-    volatile uint32_t LCDSRCPND;   /* 0x58 */
-    volatile uint32_t LCDINTMSK;   /* 0x5C */
-    volatile uint32_t TCONSEL;     /* 0x60 */
+    volatile uint32_t DITHMODE;  /* 0x4C */
+    volatile uint32_t TPAL;      /* 0x50 */
+    volatile uint32_t LCDINTPND; /* 0x54 */
+    volatile uint32_t LCDSRCPND; /* 0x58 */
+    volatile uint32_t LCDINTMSK; /* 0x5C */
+    volatile uint32_t TCONSEL;   /* 0x60 */
 } lcd_ctl_t;
 
 typedef struct {
@@ -125,8 +125,8 @@ typedef struct {
     volatile uint32_t NFMECC0;
     volatile uint32_t NFMECC1;
     volatile uint32_t NFSECC;
-    volatile uint32_t NFSBLK;       /* 0x38 - Start block address */
-    volatile uint32_t NFEBLK;       /* 0x3C - End block address   */
+    volatile uint32_t NFSBLK; /* 0x38 - Start block address */
+    volatile uint32_t NFEBLK; /* 0x3C - End block address   */
 } nand_t;
 
 typedef struct {
@@ -152,33 +152,33 @@ typedef struct {
     volatile uint32_t RSVD;
 } gpio_port_t;
 
-#define MEM_CTL         ((mem_ctl_t *)MEM_CTL_BASE)
-#define CLK_PWR         ((clk_pwr_t *)CLK_PWR_BASE)
-#define LCD             ((lcd_ctl_t *)LCD_CTL_BASE)
-#define NAND            ((nand_t *)NAND_CTL_BASE)
-#define UART0           ((uart_t *)UART_BASE)
-#define UART1           ((uart_t *)(UART_BASE + 0x4000))
-#define UART2           ((uart_t *)(UART_BASE + 0x8000))
-#define INTC            ((intc_t *)INTC_BASE)
-#define TIMER           ((timer_ctl_t *)TIMER_BASE)
-#define DMA             ((dma_t *)DMA_BASE)
-#define GPIO_PORT(n)    ((gpio_port_t *)(GPIO_BASE + (n) * 0x10))
-#define WDT_CON         (*(volatile uint32_t *)WDT_BASE)
+#define MEM_CTL      ((mem_ctl_t *)MEM_CTL_BASE)
+#define CLK_PWR      ((clk_pwr_t *)CLK_PWR_BASE)
+#define LCD          ((lcd_ctl_t *)LCD_CTL_BASE)
+#define NAND         ((nand_t *)NAND_CTL_BASE)
+#define UART0        ((uart_t *)UART_BASE)
+#define UART1        ((uart_t *)(UART_BASE + 0x4000))
+#define UART2        ((uart_t *)(UART_BASE + 0x8000))
+#define INTC         ((intc_t *)INTC_BASE)
+#define TIMER        ((timer_ctl_t *)TIMER_BASE)
+#define DMA          ((dma_t *)DMA_BASE)
+#define GPIO_PORT(n) ((gpio_port_t *)(GPIO_BASE + (n) * 0x10))
+#define WDT_CON      (*(volatile uint32_t *)WDT_BASE)
 
-#define PORT_A  0
-#define PORT_B  1
-#define PORT_C  2
-#define PORT_D  3
-#define PORT_E  4
-#define PORT_F  5
-#define PORT_G  6
-#define PORT_H  7
+#define PORT_A 0
+#define PORT_B 1
+#define PORT_C 2
+#define PORT_D 3
+#define PORT_E 4
+#define PORT_F 5
+#define PORT_G 6
+#define PORT_H 7
 
 /* --- Interrupt Numbers --- */
-#define IRQ_TIMER4     14
+#define IRQ_TIMER4 14
 
 /* --- GPIO Macros --- */
-#define GPIO_PORT_GET(pin)    (((pin) >> 8) & 0xFF)
-#define GPIO_PIN_GET(pin)     ((pin) & 0xFF)
+#define GPIO_PORT_GET(pin) (((pin) >> 8) & 0xFF)
+#define GPIO_PIN_GET(pin)  ((pin) & 0xFF)
 
 #endif

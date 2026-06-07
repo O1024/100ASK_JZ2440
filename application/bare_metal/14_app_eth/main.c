@@ -35,7 +35,7 @@ int main(void) {
     hal_uart_puts("[ETH] DM9000 loopback initialized.\r\n");
 
     const char *test_msg = "JZ2440 Ping!";
-    uint32_t payload_len = strlen(test_msg) + 1;
+    uint32_t    payload_len = strlen(test_msg) + 1;
     memcpy(tx_payload, test_msg, payload_len);
 
     hal_uart_puts("[ETH] Sending packet... ");

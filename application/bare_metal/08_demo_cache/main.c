@@ -4,8 +4,8 @@
  */
 
 #include "bsp_init.h"
-#include "hal/hal_timer.h"
 #include "hal/hal_cache.h"
+#include "hal/hal_timer.h"
 #include "hal/hal_uart.h"
 #include <stdint.h>
 
@@ -24,7 +24,7 @@ static void benchmark_test(void) {
 
 static void print_dec(uint32_t val) {
     char buf[12];
-    int i = 11;
+    int  i = 11;
     buf[i] = '\0';
     if (val == 0) {
         buf[--i] = '0';
@@ -42,7 +42,9 @@ int main(void) {
     hal_system_init();
 
     BSP_PRINT_BANNER("08 I-Cache Benchmark Demo");
-    hal_uart_puts("Iterations: "); print_dec(ITERATIONS); hal_uart_puts("\r\n");
+    hal_uart_puts("Iterations: ");
+    print_dec(ITERATIONS);
+    hal_uart_puts("\r\n");
 
     hal_timer4_init_freerun();
     hal_timer4_start();
@@ -55,7 +57,9 @@ int main(void) {
     uint16_t end_ticks = hal_timer4_get_ticks();
     uint32_t off_ticks = hal_timer4_get_elapsed_ticks(start_ticks, end_ticks);
     hal_uart_puts("Done.\r\n");
-    hal_uart_puts("Ticks: "); print_dec(off_ticks); hal_uart_puts("\r\n");
+    hal_uart_puts("Ticks: ");
+    print_dec(off_ticks);
+    hal_uart_puts("\r\n");
 
     hal_uart_puts("----------------------------------------\r\n");
 
@@ -67,7 +71,9 @@ int main(void) {
     end_ticks = hal_timer4_get_ticks();
     uint32_t on_ticks = hal_timer4_get_elapsed_ticks(start_ticks, end_ticks);
     hal_uart_puts("Done.\r\n");
-    hal_uart_puts("Ticks: "); print_dec(on_ticks); hal_uart_puts("\r\n");
+    hal_uart_puts("Ticks: ");
+    print_dec(on_ticks);
+    hal_uart_puts("\r\n");
 
     hal_uart_puts("----------------------------------------\r\n");
     if (on_ticks > 0) {
@@ -79,6 +85,7 @@ int main(void) {
     }
     hal_uart_puts("========================================\r\n");
 
-    while (1);
+    while (1)
+        ;
     return 0;
 }

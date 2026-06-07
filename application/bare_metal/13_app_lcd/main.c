@@ -4,15 +4,15 @@
  */
 
 #include "bsp_init.h"
-#include "hal/hal_uart.h"
-#include "hal/hal_lcd.h"
-#include "hal/hal_gpio.h"
 #include "hal/hal_delay.h"
+#include "hal/hal_gpio.h"
+#include "hal/hal_lcd.h"
+#include "hal/hal_uart.h"
 #include <stdint.h>
 
 extern void hal_system_init(void);
 
-#define HEARTBEAT_LED   BSP_LED1
+#define HEARTBEAT_LED BSP_LED1
 
 static void draw_demo_ui(void) {
     hal_uart_puts("[LCD] Drawing UI elements...\r\n");

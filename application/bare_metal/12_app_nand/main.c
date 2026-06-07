@@ -6,15 +6,15 @@
 #include "bsp_init.h"
 #include "hal/hal_nand.h"
 #include "hal/hal_uart.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <stddef.h>
 
 extern void hal_system_init(void);
 
-#define TEST_BLOCK      10
-#define TEST_PAGE       0
-#define TEST_ADDR       (TEST_BLOCK * NAND_BLOCK_SIZE + TEST_PAGE * NAND_PAGE_SIZE)
+#define TEST_BLOCK 10
+#define TEST_PAGE  0
+#define TEST_ADDR  (TEST_BLOCK * NAND_BLOCK_SIZE + TEST_PAGE * NAND_PAGE_SIZE)
 
 static uint8_t data_buf[NAND_PAGE_SIZE];
 
@@ -32,18 +32,28 @@ static void print_hex32(uint32_t val) {
 }
 
 static void nand_diagnostics(void) {
-    uint8_t id_buf[5] = {0};
-    int status;
+    uint8_t     id_buf[5] = {0};
+    int         status;
     const char *test_msg = "JZ2440 Professional NAND Diagnostic Pattern: 0x55AA55AA";
 
     BSP_PRINT_BANNER("12 NAND Flash Diagnostic Demo");
-    hal_uart_puts("Test Block: "); print_hex32(TEST_BLOCK); hal_uart_puts("\r\n");
+    hal_uart_puts("Test Block: ");
+    print_hex32(TEST_BLOCK);
+    hal_uart_puts("\r\n");
 
     hal_nand_read_id(id_buf);
     hal_uart_puts("[Phase 1] Chip Identification\r\n");
-    hal_uart_puts("  Maker ID  : 0x"); print_hex8(id_buf[0]); hal_uart_puts("\r\n");
-    hal_uart_puts("  Device ID : 0x"); print_hex8(id_buf[1]); hal_uart_puts("\r\n");
-    hal_uart_puts("  Ext ID    : 0x"); print_hex8(id_buf[2]); print_hex8(id_buf[3]); print_hex8(id_buf[4]); hal_uart_puts("\r\n");
+    hal_uart_puts("  Maker ID  : 0x");
+    print_hex8(id_buf[0]);
+    hal_uart_puts("\r\n");
+    hal_uart_puts("  Device ID : 0x");
+    print_hex8(id_buf[1]);
+    hal_uart_puts("\r\n");
+    hal_uart_puts("  Ext ID    : 0x");
+    print_hex8(id_buf[2]);
+    print_hex8(id_buf[3]);
+    print_hex8(id_buf[4]);
+    hal_uart_puts("\r\n");
 
     hal_uart_puts("\r\n[Phase 2] Geometry Parameters\r\n");
     hal_uart_puts("  Page Size : 2048 Bytes\r\n");
@@ -62,7 +72,10 @@ static void nand_diagnostics(void) {
 
     hal_uart_puts("  1. Erasing Block... ");
     status = hal_nand_erase_block(TEST_BLOCK);
-    if (status != 0) { hal_uart_puts("FAILED\r\n"); return; }
+    if (status != 0) {
+        hal_uart_puts("FAILED\r\n");
+        return;
+    }
     hal_uart_puts("OK\r\n");
 
     memset(data_buf, 0xFF, NAND_PAGE_SIZE);
@@ -70,13 +83,19 @@ static void nand_diagnostics(void) {
 
     hal_uart_puts("  2. Writing Page...  ");
     status = hal_nand_write_page(TEST_BLOCK, TEST_PAGE, data_buf);
-    if (status != 0) { hal_uart_puts("FAILED\r\n"); return; }
+    if (status != 0) {
+        hal_uart_puts("FAILED\r\n");
+        return;
+    }
     hal_uart_puts("OK\r\n");
 
     hal_uart_puts("  3. Reading Page...  ");
     memset(data_buf, 0x00, NAND_PAGE_SIZE);
     status = hal_nand_read_page(TEST_BLOCK, TEST_PAGE, data_buf);
-    if (status != 0) { hal_uart_puts("FAILED\r\n"); return; }
+    if (status != 0) {
+        hal_uart_puts("FAILED\r\n");
+        return;
+    }
     hal_uart_puts("OK\r\n");
 
     hal_uart_puts("  4. Verifying...     ");
@@ -107,6 +126,7 @@ int main(void) {
 
     nand_diagnostics();
 
-    while (1);
+    while (1)
+        ;
     return 0;
 }

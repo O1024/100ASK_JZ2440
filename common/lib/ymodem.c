@@ -1,45 +1,52 @@
 #include "lib/ymodem.h"
-#include "lib/crc16.h"
 #include "hal/hal_uart.h"
+#include "lib/crc16.h"
 #include <stddef.h>
 
-#define SOH                     0x01
-#define STX                     0x02
-#define EOT                     0x04
-#define ACK                     0x06
-#define NAK                     0x15
-#define CAN                     0x18
-#define C                       0x43
+#define SOH 0x01
+#define STX 0x02
+#define EOT 0x04
+#define ACK 0x06
+#define NAK 0x15
+#define CAN 0x18
+#define C   0x43
 
 #define PACKET_SEQNO_INDEX      1
 #define PACKET_SEQNO_COMP_INDEX 2
 
-#define PACKET_HEADER           3
-#define PACKET_TRAILER          2
-#define PACKET_OVERHEAD         (PACKET_HEADER + PACKET_TRAILER)
-#define PACKET_SIZE             128
-#define PACKET_1K_SIZE          1024
+#define PACKET_HEADER   3
+#define PACKET_TRAILER  2
+#define PACKET_OVERHEAD (PACKET_HEADER + PACKET_TRAILER)
+#define PACKET_SIZE     128
+#define PACKET_1K_SIZE  1024
 
 static uint8_t rx_packet_buf[PACKET_1K_SIZE + PACKET_OVERHEAD];
 static uint8_t soh_capture_buf[SOH_FRAME_SIZE + PACKET_OVERHEAD];
-static int soh_captured = 0;
+static int     soh_captured = 0;
 
-static int receive_packet(int *length, uint8_t *seq, uint32_t timeout, int *out_err, uint8_t *out_seq) {
+static int
+receive_packet(int *length, uint8_t *seq, uint32_t timeout, int *out_err, uint8_t *out_seq) {
     uint16_t crc, crc_calc;
-    uint8_t checksum, checksum_calc;
-    char c;
-    int i;
-    int err = 0;
+    uint8_t  checksum, checksum_calc;
+    char     c;
+    int      i;
+    int      err = 0;
 
     if (hal_uart_getc_timeout(timeout, &c) != 0) {
         return -1;
     }
 
     switch (c) {
-        case SOH: *length = PACKET_SIZE; break;
-        case STX: *length = PACKET_1K_SIZE; break;
-        case EOT: return 1;
-        case CAN: return 2;
+        case SOH:
+            *length = PACKET_SIZE;
+            break;
+        case STX:
+            *length = PACKET_1K_SIZE;
+            break;
+        case EOT:
+            return 1;
+        case CAN:
+            return 2;
         default:
             err = YMODEM_ERR_BAD_HEADER;
             goto fail;
@@ -63,7 +70,8 @@ static int receive_packet(int *length, uint8_t *seq, uint32_t timeout, int *out_
     }
 
     /* Sequence number check */
-    if (rx_packet_buf[PACKET_SEQNO_INDEX] != ((rx_packet_buf[PACKET_SEQNO_COMP_INDEX] ^ 0xFF) & 0xFF)) {
+    if (rx_packet_buf[PACKET_SEQNO_INDEX] !=
+        ((rx_packet_buf[PACKET_SEQNO_COMP_INDEX] ^ 0xFF) & 0xFF)) {
         err = YMODEM_ERR_SEQ;
         goto fail;
     }
@@ -96,22 +104,28 @@ static int receive_packet(int *length, uint8_t *seq, uint32_t timeout, int *out_
     err = YMODEM_ERR_CRC;
 
 fail:
-    if (out_err) *out_err = err;
-    if (out_seq) *out_seq = rx_packet_buf[PACKET_SEQNO_INDEX];
+    if (out_err)
+        *out_err = err;
+    if (out_seq)
+        *out_seq = rx_packet_buf[PACKET_SEQNO_INDEX];
     return -1;
 }
 
-int ymodem_receive_ex(ymodem_write_cb write_cb, ymodem_start_cb start_cb, int *out_last_error, uint8_t *out_last_seq, uint32_t *out_file_size) {
-    int session_done = 0;
-    int errors = 0;
-    int status;
-    int length = 0;
-    uint8_t seq = 0;
+int ymodem_receive_ex(ymodem_write_cb write_cb,
+                      ymodem_start_cb start_cb,
+                      int            *out_last_error,
+                      uint8_t        *out_last_seq,
+                      uint32_t       *out_file_size) {
+    int      session_done = 0;
+    int      errors = 0;
+    int      status;
+    int      length = 0;
+    uint8_t  seq = 0;
     uint32_t flash_offset = 0;
-    uint8_t expected_seq = 0;
-    int file_done = 0;
-    int last_err = 0;
-    uint8_t last_seq = 0;
+    uint8_t  expected_seq = 0;
+    int      file_done = 0;
+    int      last_err = 0;
+    uint8_t  last_seq = 0;
     uint32_t file_size = 0;
 
     /* Initial Handshake: Send 'C' until valid packet received */
@@ -144,7 +158,8 @@ int ymodem_receive_ex(ymodem_write_cb write_cb, ymodem_start_cb start_cb, int *o
                     {
                         const uint8_t *p = &rx_packet_buf[PACKET_HEADER];
                         /* Skip filename */
-                        while (*p) p++;
+                        while (*p)
+                            p++;
                         p++; /* Skip null terminator */
                         /* Parse file size (decimal ASCII) */
                         file_size = 0;
@@ -169,7 +184,9 @@ int ymodem_receive_ex(ymodem_write_cb write_cb, ymodem_start_cb start_cb, int *o
                 } else {
                     /* Data Packet */
                     if (write_cb) {
-                        if (write_cb(flash_offset, &rx_packet_buf[PACKET_HEADER], (uint32_t)length) != 0) {
+                        if (write_cb(flash_offset,
+                                     &rx_packet_buf[PACKET_HEADER],
+                                     (uint32_t)length) != 0) {
                             hal_uart_putc(CAN);
                             hal_uart_putc(CAN);
                             return YMODEM_ERROR;
@@ -224,9 +241,12 @@ int ymodem_receive_ex(ymodem_write_cb write_cb, ymodem_start_cb start_cb, int *o
         status = receive_packet(&length, &seq, 3000, &last_err, &last_seq);
     }
 
-    if (out_last_error) *out_last_error = last_err;
-    if (out_last_seq)   *out_last_seq = last_seq;
-    if (out_file_size)  *out_file_size = file_size;
+    if (out_last_error)
+        *out_last_error = last_err;
+    if (out_last_seq)
+        *out_last_seq = last_seq;
+    if (out_file_size)
+        *out_file_size = file_size;
     return YMODEM_OK;
 }
 
@@ -249,7 +269,7 @@ void ymodem_print_last_soh(void) {
 
     hal_uart_puts("[YModem] Last SOH frame (133 bytes):\r\n");
     for (int i = 0; i < (PACKET_SIZE + PACKET_OVERHEAD); i++) {
-        uint8_t val = buf[i];
+        uint8_t    val = buf[i];
         const char hex[] = "0123456789ABCDEF";
         hal_uart_putc(hex[(val >> 4) & 0xF]);
         hal_uart_putc(hex[val & 0xF]);

@@ -6,8 +6,8 @@
 #include "ll_timer.h"
 #include "ll_irq.h"
 #include "s3c2440_soc.h"
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /* --- Overflow counting for long-duration measurements --- */
 static volatile uint32_t g_timer4_overflows = 0;
@@ -36,7 +36,7 @@ void ll_timer4_init(uint32_t ms) {
     /* 3. Manual Update sequence */
     TIMER->TCON |= (1 << 21);
     TIMER->TCON &= ~(1 << 21);
-    
+
     /* 4. Auto Reload setup */
     TIMER->TCON |= (1 << 22);
 
@@ -45,7 +45,7 @@ void ll_timer4_init(uint32_t ms) {
 }
 
 void ll_timer4_start(void) {
-    TIMER->TCON |= (1 << 20);      /* Kick off */
+    TIMER->TCON |= (1 << 20); /* Kick off */
     ll_irq_enable(IRQ_TIMER4);
 }
 
@@ -72,7 +72,7 @@ void ll_timer4_init_freerun(void) {
     /* 3. Manual Update sequence */
     TIMER->TCON |= (1 << 21);
     TIMER->TCON &= ~(1 << 21);
-    
+
     /* 4. Auto Reload setup */
     TIMER->TCON |= (1 << 22);
 

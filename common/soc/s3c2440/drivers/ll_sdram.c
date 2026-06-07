@@ -8,7 +8,7 @@
 
 /**
  * @brief Initialize Memory Controller for SDRAM
- * 
+ *
  * Target: HY57V561620 (32MB x 2 = 64MB)
  * Bus Width: 32-bit (Bank 6)
  * CAS Latency: 3 cycles

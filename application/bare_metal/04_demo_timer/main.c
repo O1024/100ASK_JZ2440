@@ -5,15 +5,15 @@
 
 #include "bsp_init.h"
 #include "hal/hal_gpio.h"
-#include "hal/hal_uart.h"
-#include "hal/hal_timer.h"
 #include "hal/hal_irq.h"
+#include "hal/hal_timer.h"
+#include "hal/hal_uart.h"
 #include <stdint.h>
 
 extern void hal_system_init(void);
 
-#define HEARTBEAT_LED       BSP_LED1
-#define TIMER_INTERVAL_MS   1000
+#define HEARTBEAT_LED     BSP_LED1
+#define TIMER_INTERVAL_MS 1000
 
 static volatile uint32_t g_timer_ticks = 0;
 

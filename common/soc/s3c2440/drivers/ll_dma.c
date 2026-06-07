@@ -19,33 +19,33 @@ void ll_dma_config_software(uint32_t ch, ll_dma_config_t *cfg) {
 
     // 2. 设置初始目的地址及控制位
     dma_ch->DIDST = cfg->dst_addr;
-    // CHK_INT: 0=TC达到0时中断; LOC, INC 
+    // CHK_INT: 0=TC达到0时中断; LOC, INC
     dma_ch->DIDSTC = (0 << 2) | (cfg->dst_bus << 1) | (cfg->dst_addr_mode << 0);
 
     // 3. 配置 DCON 寄存器 (软件触发，整体服务模式)
     uint32_t dcon = 0;
     // DMD_HS: 0=需求模式(Demand mode), 1=握手模式(Handshake mode)
     // 内存到内存搬运应使用 Demand mode 以获得最高性能
-    dcon |= (0U << 31);                
-    dcon |= (0 << 30);                 // SYNC: 0=同步到 PCLK, 1=同步到 HCLK
-    dcon |= (0 << 29);                 // INT: 0=禁止中断, 使用轮询(Polling)
-    
+    dcon |= (0U << 31);
+    dcon |= (0 << 30); // SYNC: 0=同步到 PCLK, 1=同步到 HCLK
+    dcon |= (0 << 29); // INT: 0=禁止中断, 使用轮询(Polling)
+
     // TSZ: 0=单元传输(Unit), 1=突发传输(Burst4)
-    dcon |= (cfg->trans_type << 28);   
-    
-    dcon |= (1 << 27);                 // SERVMODE: 1=整体服务模式(Whole service mode)
-    dcon |= (0 << 23);                 // SWHW_SEL: 0=软件触发请求模式
-    dcon |= (1 << 22);                 // RELOAD: 1=关闭自动重载
-    dcon |= (cfg->data_size << 20);    // DSZ [21:20]: 传输数据宽度
-    
+    dcon |= (cfg->trans_type << 28);
+
+    dcon |= (1 << 27);              // SERVMODE: 1=整体服务模式(Whole service mode)
+    dcon |= (0 << 23);              // SWHW_SEL: 0=软件触发请求模式
+    dcon |= (1 << 22);              // RELOAD: 1=关闭自动重载
+    dcon |= (cfg->data_size << 20); // DSZ [21:20]: 传输数据宽度
+
     // TC [19:0]: 初始传输计数值
     // 如果是 Burst4 模式，TC 寄存器存的是 Burst 的次数 (TC = Units / 4)
     uint32_t tc = cfg->transfer_count;
     if (cfg->trans_type == LL_DMA_TRANS_BURST4) {
         tc /= 4;
     }
-    dcon |= (tc & 0xFFFFF); 
-    
+    dcon |= (tc & 0xFFFFF);
+
     dma_ch->DCON = dcon;
 }
 
