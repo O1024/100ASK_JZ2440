@@ -10,7 +10,7 @@
 
 void ll_mmu_enable(uint32_t page_table_base) {
     uint32_t control;
-    uint32_t domain = 0x3;
+    uint32_t domain = 0x1; /* Domain 0 = Client (standard) */
     uint32_t zero = 0;
 
     __asm__ volatile(
@@ -29,12 +29,12 @@ void ll_mmu_enable(uint32_t page_table_base) {
         /* Drain write buffer */
         "mcr    p15, 0, %2, c7, c10, 4\n"
 
-        /* Enable MMU + D-Cache + I-Cache */
-        /* Alignment Check (A bit) is disabled for better performance with unaligned accesses */
+        /* Enable MMU + D-Cache + I-Cache + Write Buffer */
         "mrc    p15, 0, %0, c1, c0, 0\n"
-        "orr    %0, %0, #0x1\n"       /* M bit: MMU enable */
-        "orr    %0, %0, #0x4\n"       /* D bit: Data cache enable */
         "orr    %0, %0, #0x1000\n"    /* I bit: Instruction cache enable */
+        "orr    %0, %0, #0x8\n"       /* W bit: Write Buffer enable */
+        "orr    %0, %0, #0x4\n"       /* D bit: Data cache enable */
+        "orr    %0, %0, #0x1\n"       /* M bit: MMU enable */
         "mcr    p15, 0, %0, c1, c0, 0\n"
 
         /* CP15 pipeline flush */

@@ -6,6 +6,8 @@
 #ifndef __HAL_CACHE_H__
 #define __HAL_CACHE_H__
 
+#include <stdint.h>
+
 /**
  * @brief Enable Instruction Cache (I-Cache)
  */
@@ -37,5 +39,19 @@ void hal_cache_disable_dcache(void);
  * @return 1 if enabled, 0 if disabled
  */
 int hal_cache_is_dcache_enabled(void);
+
+/**
+ * @brief Clean D-Cache range (Write back dirty lines to RAM)
+ * @param start Start virtual address
+ * @param size Size in bytes
+ */
+void hal_cache_clean_dcache_range(uint32_t start, uint32_t size);
+
+/**
+ * @brief Invalidate D-Cache range (Force CPU to re-read from RAM)
+ * @param start Start virtual address
+ * @param size Size in bytes
+ */
+void hal_cache_invalidate_dcache_range(uint32_t start, uint32_t size);
 
 #endif /* __HAL_CACHE_H__ */

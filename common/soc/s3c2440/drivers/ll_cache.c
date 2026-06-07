@@ -85,3 +85,20 @@ int ll_cache_is_dcache_enabled(void) {
     __asm__ volatile("mrc p15, 0, %0, c1, c0, 0\n" : "=r"(reg));
     return (reg & (1 << 2)) ? 1 : 0;
 }
+
+void ll_cache_clean_dcache_range(uint32_t start, uint32_t size) {
+    uint32_t addr;
+    /* ARM920T cache line size is 32 bytes */
+    for (addr = start; addr < (start + size); addr += 32) {
+        __asm__ volatile("mcr p15, 0, %0, c7, c10, 1\n" : : "r"(addr));
+    }
+    /* Drain write buffer */
+    __asm__ volatile("mcr p15, 0, %0, c7, c10, 4\n" : : "r"(0));
+}
+
+void ll_cache_invalidate_dcache_range(uint32_t start, uint32_t size) {
+    uint32_t addr;
+    for (addr = start; addr < (start + size); addr += 32) {
+        __asm__ volatile("mcr p15, 0, %0, c7, c6, 1\n" : : "r"(addr));
+    }
+}
