@@ -4,13 +4,13 @@
 
 ## 项目概述
 
-面向 100ASK JZ2440 开发板的裸机 ARM920T (S3C2440) SDK。构建系统基于 Make，使用 `arm-none-eabi-gcc` 交叉编译。目前仅 `application/bare_metal/` 目录有实际代码；`application/freertos/`、`rt_thread/`、`bootloader/`、`kernel/`、`linux/` 均为空占位符。
+面向 100ASK JZ2440 开发板的裸机 ARM920T (S3C2440) SDK。构建系统基于 Make，使用 `arm-none-eabi-gcc` 交叉编译。目前仅 `application/bare_metal/` 目录有实际代码；`application/freertos/` 和 `application/rt_thread/` 为空占位符。
 
 ## 构建系统
 
-- **必须在应用目录内构建**，切勿在仓库根目录下执行 `make`。每个应用目录都有自己的 `Makefile`，通过 `TOP_DIR` 包含 `../../common.mk`。
+- **必须在应用目录内构建**，切勿在仓库根目录下执行 `make`。每个应用目录都有自己的 `Makefile`，通过 `TOP_DIR` 包含 `$(TOP_DIR)/common.mk`（从应用目录到 `common.mk` 为 `../../../common.mk`）。
 - 默认静默编译，使用 `make V=1` 查看完整编译/链接命令。
-- 工具链前缀：`arm-none-eabi-`。`common.mk` 硬编码了 `libgcc` 路径 `/usr/lib/gcc/arm-none-eabi/13.2.1/libgcc.a`。如果工具链版本不同，必须更新此路径，否则链接阶段会失败。
+- 工具链前缀：`arm-none-eabi-`。`common.mk` 使用 `-nostartfiles` 模式链接，当前不依赖 `libgcc`。
 - `common.mk` 自动生成 `.d` 依赖文件，头文件修改会正确触发依赖重编。
 - `--gc-sections` 始终生效，因此将所有驱动加入 `SRCS` 是安全的——链接器会自动丢弃未使用的函数。
 
@@ -20,7 +20,7 @@
 TARGET     := $(notdir $(CURDIR))
 TOP_DIR    := ../../..
 ROM_ADDR   := 0x00000000              # SDRAM 应用改为 0x30000000
-RAM_TARGET := isram                   # 或 sdram
+RAM_TARGET := isram                   # 或 sdram（部分应用使用 `nor` 作为别名，等效于 `isram`）
 START_FILE := $(TOP_DIR)/common/arch/demo_start.S   # 或 app_start.S / boot_start.S
 LDSCRIPT   := $(TOP_DIR)/common/lds/demo.lds        # 或 app.lds / boot.lds
 include $(TOP_DIR)/common.mk
@@ -52,7 +52,7 @@ make BOOT_MEDIA=nand       # 强制编译 NAND 版本
 
 **ISRAM 模式**（`RAM_TARGET := isram`）——应用在 4 KB 内部 SRAM (`0x40000000`) 中运行。代码段和只读数据段在 NOR Flash 中就地执行 (XIP)，data/bss 段在 SRAM 中。使用 `demo.lds` 或 `boot.lds` 链接。适用于小型实验（LED、UART、时钟）和 bootloader。
 
-**SDRAM 模式**（`RAM_TARGET := sdram`）——应用被加载到 64 MB SDRAM (`0x30000000`) 中运行。所有段均在 SDRAM 中。使用 `app.lds` 链接。需要由 bootloader 初始化 SDRAM 并加载应用。栈位于 `0x34000000`。
+**SDRAM 模式**（`RAM_TARGET := sdram`）——应用被加载到 64 MB SDRAM (`0x30000000`) 中运行。所有段均在 SDRAM 中。使用 `app.lds` 链接。需要由 bootloader 初始化 SDRAM 并加载应用。SVC 栈位于 `0x33ff0000`，IRQ 栈位于 `0x34000000`。
 
 ## 分层架构
 
@@ -78,13 +78,15 @@ SoC 头文件 (s3c2440_soc.h)         —— 外设寄存器 typedef 结构体 +
 
 三种启动文件对应三种链接脚本：
 
-| 启动文件 | 链接脚本 | 栈位置 | 用途 |
+| 启动文件 | 链接脚本 | 栈位置（SVC / IRQ） | 用途 |
 |---|---|---|---|
-| `demo_start.S` | `demo.lds`（代码在 NOR，数据在 ISRAM） | ISRAM `0x40000f00` | 独立小型实验 |
-| `boot_start.S` | `boot.lds`（代码在 NOR，数据在 ISRAM，16KB 限制） | ISRAM（早期）→ SDRAM（初始化后） | Bootloader |
-| `app_start.S` | `app.lds`（所有段均在 SDRAM） | SDRAM `0x33ff0000` | Bootloader 加载的应用 |
+| `start.S` | `demo.lds`（代码在 NOR，数据在 ISRAM） | ISRAM `0x40000c00` / `0x40001000` | 默认启动文件，通用裸机实验 |
+| `demo_start.S` | `demo.lds`（代码在 NOR，数据在 ISRAM） | ISRAM `0x40000f00` / `0x40001000` | 独立小型实验 |
+| `boot_start.S` | `boot.lds`（代码在 NOR，数据在 ISRAM，16KB 限制） | ISRAM `0x40000c00` → SDRAM 后切换 | Bootloader |
+| `app_start.S` | `app.lds`（所有段均在 SDRAM） | SDRAM `0x33ff0000` / `0x34000000` | Bootloader 加载的应用 |
 
 所有启动文件流程：关闭看门狗 → 设置栈（IRQ + SVC 模式）→ `bl main`。均包含异常向量表，支持 IRQ（调用 `handle_irq`）。
+默认 `START_FILE` 为 `start.S`；应用可通过 Makefile 中的 `START_FILE` 变量选择其他启动文件。
 
 `boot_start.S` 的特殊之处：
 - 在汇编中自行清零 BSS 段（不依赖 `hal_system_init`）
