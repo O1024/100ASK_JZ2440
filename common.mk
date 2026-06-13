@@ -153,7 +153,7 @@ openocd:
 gdb: $(TARGET).elf
 	$(Q)gdb-multiarch -x $(TOP_DIR)/tools/gdb/gdbinit $<
 
-flash: flash_nor
+flash: flash_$(BOOT_MEDIA)
 
 flash_nor: $(TARGET).bin
 	$(Q)openocd -f $(TOP_DIR)/tools/openocd/jz2440.cfg -c "init; halt; arm mcr 15 0 1 0 0 0x00000078; flash erase_sector 0 0 last; flash write_image $< 0; reset; exit"
