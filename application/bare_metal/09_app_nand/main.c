@@ -36,7 +36,7 @@ static void nand_diagnostics(void) {
     int         status;
     const char *test_msg = "JZ2440 Professional NAND Diagnostic Pattern: 0x55AA55AA";
 
-    BSP_PRINT_BANNER("12 NAND Flash Diagnostic Demo");
+    BSP_PRINT_BANNER("09 NAND Flash Diagnostic Demo");
     hal_uart_puts("Test Block: ");
     print_hex32(TEST_BLOCK);
     hal_uart_puts("\r\n");
@@ -119,10 +119,10 @@ int main(void) {
 
 #ifdef TARGET_SDRAM
     bsp_uart_init();
-    bsp_nand_init();
 #else
     bsp_init();
 #endif
+    bsp_nand_init();
 
     nand_diagnostics();
 
