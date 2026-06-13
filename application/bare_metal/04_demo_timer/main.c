@@ -44,9 +44,7 @@ int main(void) {
     g_timer_ticks = 0;
 
     /* 2. Board-level init */
-    bsp_clock_init();
-    bsp_uart_init();
-    bsp_gpio_init();
+    bsp_init();
 
     BSP_PRINT_BANNER("04 Timer Interrupt Demo");
     hal_uart_puts("Config: Timer4 periodic interrupt every 1000 ms.\r\n");

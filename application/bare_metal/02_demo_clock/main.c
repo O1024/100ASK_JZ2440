@@ -26,16 +26,13 @@ static void led_demo(void) {
 }
 
 int main(void) {
-    /* 1. Critical: boost clock BEFORE data relocation */
-    bsp_clock_init();
-
-    /* 2. C Runtime */
+    /* 1. C Runtime */
     hal_system_init();
 
-    /* 3. Board-level GPIO init */
-    bsp_gpio_init();
+    /* 2. Board-level init */
+    bsp_init();
 
-    /* 4. Demo loop */
+    /* 3. Demo loop */
     led_demo();
 
     return 0;

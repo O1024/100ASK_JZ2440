@@ -52,8 +52,8 @@ static void mmu_setup_page_table(void) {
 }
 
 int main(void) {
-    bsp_init();
     hal_system_init();
+    bsp_init();
 
     BSP_PRINT_BANNER("07 MMU Demo (using HAL API)");
     hal_uart_puts("Mode   : Running from NOR/ISRAM\r\n");

@@ -26,15 +26,11 @@ static void uart_echo_loop(void) {
 }
 
 int main(void) {
-    /* 1. Low-level Hardware (Clock) */
-    bsp_clock_init();
-
-    /* 2. Data Relocation */
+    /* 1. C Runtime */
     hal_system_init();
 
-    /* 3. Board-level init (UART + GPIO heartbeat LED) */
-    bsp_uart_init();
-    bsp_gpio_init();
+    /* 2. Board-level init */
+    bsp_init();
 
     BSP_PRINT_BANNER("03 UART Console Demo");
     hal_uart_puts("Settings: 115200 8N1\r\n");

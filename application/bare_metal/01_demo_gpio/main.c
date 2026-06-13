@@ -47,8 +47,8 @@ int main(void) {
     /* 1. C Runtime */
     hal_system_init();
 
-    /* 2. Board-level GPIO init (LED + Key) */
-    bsp_gpio_init();
+    /* 2. Board-level init */
+    bsp_init();
 
     /* 3. Key scan loop */
     key_scan_loop();

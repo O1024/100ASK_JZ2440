@@ -40,11 +40,11 @@ static void print_dec(uint32_t val) {
 }
 
 int main(void) {
-    /* 1. Critical Early Initialization */
-    bsp_clock_init();
-    bsp_sdram_init();
-    bsp_uart_init();
+    /* 1. C Runtime */
     hal_system_init();
+
+    /* 2. Board-level init */
+    bsp_init();
 
     BSP_PRINT_BANNER("06 DMA vs CPU Performance Demo");
     hal_uart_puts("Transfer Size: 1 MB\r\n");

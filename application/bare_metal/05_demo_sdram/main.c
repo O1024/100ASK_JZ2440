@@ -45,13 +45,11 @@ static int sdram_test_chunk(uint32_t start_addr, uint32_t size_bytes, uint32_t p
 }
 
 int main(void) {
-    /* 1. Hardware Initialization */
-    bsp_clock_init();
-    bsp_sdram_init();
-    bsp_uart_init();
-
-    /* 2. C Runtime */
+    /* 1. C Runtime */
     hal_system_init();
+
+    /* 2. Board-level init */
+    bsp_init();
 
     BSP_PRINT_BANNER("05 SDRAM Diagnostic Demo");
     hal_uart_puts("Base Address : ");

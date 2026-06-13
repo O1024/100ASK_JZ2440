@@ -200,8 +200,8 @@ static void benchmark_dcache_test(void) {
 }
 
 int main(void) {
-    bsp_init();
     hal_system_init();
+    bsp_init();
 
     BSP_PRINT_BANNER("08 Cache (I-Cache + D-Cache) Benchmark Demo");
     
