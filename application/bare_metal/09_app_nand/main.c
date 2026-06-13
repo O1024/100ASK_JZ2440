@@ -110,18 +110,8 @@ static void nand_diagnostics(void) {
 }
 
 int main(void) {
-#ifdef TARGET_SDRAM
-    bsp_clock_init();
-    bsp_sdram_init();
-#endif
-
     hal_system_init();
-
-#ifdef TARGET_SDRAM
-    bsp_uart_init();
-#else
     bsp_init();
-#endif
     bsp_nand_init();
 
     nand_diagnostics();
